@@ -12,8 +12,58 @@
     <meta charset="UTF-8">
     <title>Title</title>
 </head>
-<body>
-
+<body ng-controller="MainController">
+    <div class="container-fluid">
+        <div class="row">
+            <form class="form-group">
+                <label>Diet duration <input type="number" class="form-control" id="diet-duration" ng-model="config.duration"></label>
+                <label>Body weight (lbs) <input type="number" class="form-control" id="body-weight" ng-model="config.bodyWeight"></label>
+                <label>Body fat (%) <input type="number" class="form-control" id="body-fat-percentage" ng-model="config.bodyFatPercentage"></label>
+                <label>Female <input type="checkbox" class="form-control" id="female" ng-model="female"></label>
+                <label>Height (inches) <input type="number" class="form-control" id="height" ng-model="config.height"></label>
+                <label>Abdomen circumference (inches) <input type="number" class="form-control" id="abdomen" ng-model="config.abdomen"></label>
+                <label>Neck circumference (inches) <input type="number" class="form-control" id="neck" ng-model="config.neck"></label>
+                <label ng-if="female">Hips circumferences (inches) <input type="number" class="form-control" id="hips" ng-model="config.hips"></label>
+                <label>Wrist circumference (inches) <input type="number" class="form-control" id="wrist" ng-model="config.wrist"></label>
+                <label>Ankle circumference (inches) <input type="number" class="form-control" id="ankle" ng-model="config.ankle"></label>
+                <label>Mass preservation coefficient <input type="range" min="0.5" max="1.5" step="0.1" class="form-control" id="mass-preservation-coefficient" ng-model="config.massPreservationCoefficient"></label>
+                <label>Work Activity level <select class="form-control" id="activity-level" ng-model="config.activityLevel">
+                    <option value="1.2">Primarily seated</option>
+                    <option value="1.375">Moderate standing/light movement</option>
+                    <option value="1.55">Primarily standing/frequent movement</option>
+                    <option value="1.725">Manual labor (light lifting/carrying)</option>
+                    <option value="1.9">Manual labor (heavy lifting/carrying)</option>
+                </select></label>
+                <label>Fasted exercise calorie expenditure <input type="number" class="form-control" id="exercise-calorie-expenditure" ng-model="config.exerciseCalorieExpenditure"></label>
+                <label>Weekly fasted exercise sessions <input type="number" class="form-control" id="weekly-exercise-sessions" ng-model="config.weeklyExerciseSessions"></label>
+                <button ng-click="computeModel()">Compute</button>
+            </form>
+        </div>
+        <div class="row" ng-show="dietPlan">
+            <table>
+                <th>
+                    <tr>
+                        <td>Daily energy expenditure</td>
+                        <td>Daily calorie intake</td>
+                        <td>Weight</td>
+                        <td>Body fat percent</td>
+                        <td>Lean mass</td>
+                        <td>Fat mass</td>
+                    </tr>
+                </th>
+                <tbody>
+                <tr ng-repeat="week in dietPlan">
+                    <td>{{ week.dailyEnergyExpenditure }}</td>
+                    <td>{{ week.dailyCalorieIntake }}</td>
+                    <td>{{ week.leanMass + week.fatMass }}</td>
+                    <td>{{ week.fatMass / (week.fatMass + week.leanMass) * 100 }}</td>
+                    <td>{{ week.leanMass }}</td>
+                    <td>{{ week.fatMass }}</td>
+                </tr>
+               <tbody>
+            </table>
+        </div>
+    </div>
 </body>
 <script src="angular.min.js"></script>
 <script src="ui-bootstrap-tpls-0.14.3.min.js"></script>

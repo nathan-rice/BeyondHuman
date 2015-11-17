@@ -2,7 +2,7 @@
  * Created by nathan on 11/14/15.
  */
 
-angular.app("BeyondHuman").factory("EstimatorService", function () {
+angular.module("BeyondHuman").factory("EstimatorService", function () {
     var navyBodyFatEstimator, maximumLeanBodyMassEstimator, basalMetabolicRateEstimator, monthlyMuscleGainEstimator,
         weeklyMuscleGainEstimator, dailyMuscleGainEstimator, trainingAgeEstimator, dailyMaximumDietaryDeficitEstimator,
         muscleGainCalorieRequirementEstimator, muscleGainForCaloriesEstimator, activityExpenditureEstimator,
@@ -20,7 +20,7 @@ angular.app("BeyondHuman").factory("EstimatorService", function () {
 
     maximumLeanBodyMassEstimator = function (height, wrist, ankle) {
         // uses the maximum lean body mass formula by Casey Butt
-        var maxBodyWeight = Math.pow(height, 1.5) * (Math.sqrt(wrist)/22.6670 + Math.sqrt(ankle/17.0104)) * (10/224 + 1);
+        var maxBodyWeight = Math.pow(height, 1.5) * (Math.sqrt(wrist)/22.6670 + Math.sqrt(ankle)/17.0104) * (10/224 + 1);
         return maxBodyWeight * 0.9;
     };
 
@@ -41,7 +41,7 @@ angular.app("BeyondHuman").factory("EstimatorService", function () {
     basalMetabolicRateEstimator = function (leanMass) {
         /* uses Katch-McArdle BRM estimator as our target user is not well modeled by BMR estimators that do not take
            LBM into account */
-        return 370 + (21.6 * leanMass)
+        return 370 + (21.6 * leanMass / 2.2)
     };
 
     metabolicRateReductionEstimator = function (fatMass, oldCalorieIntake, newCalorieIntake, adaptiveThermogenesis) {
@@ -107,7 +107,7 @@ angular.app("BeyondHuman").factory("EstimatorService", function () {
     }
 });
 
-angular.app("BeyondHuman").factory("DietModelingService", function (EstimatorService) {
+angular.module("BeyondHuman").factory("DietModelingService", function (EstimatorService) {
     var modelDiet, modelDietWeek;
 
     /*
@@ -125,16 +125,17 @@ angular.app("BeyondHuman").factory("DietModelingService", function (EstimatorSer
      * - ankle: ankle circumference, in inches
      * - massPreservationCoefficient: a multiplier used to scale the dietary deficit towards or away LBM preservation
      * - activityLevel: a general activity level (excluding specific exercise) used to adjust total calorie expenditure
-     * - dailyExerciseCalorieUtilization: a specific daily calorie utilization estimated from exercise performed (optional)
+     * - exerciseCalorieExpenditure: a specific daily calorie utilization estimated from exercise performed (optional)
+     * - weeklyExerciseSessions: the number of fasted low intensity cardio sessions performed per week
      */
     modelDiet = function (config) {
         var i, fatMass, leanMass, maxLeanMass, calorieIntake, calorieIntakeDelta, adaptiveThermogenesis,
             adaptiveThermogenesisDelta, dietModelResults = [];
         // first we need to figure out the fat mass, which we will use to get lean mass and a variety of other things
         if (config.bodyFatPercentage) {
-            fatMass = config.bodyWeight * config.bodyFatPercentage;
+            fatMass = config.bodyWeight * config.bodyFatPercentage / 100;
         } else {
-            fatMass = config.bodyWeight * EstimatorService.bodyFat(config.height, config.abdomen,config.neck, config.hips);
+            fatMass = config.bodyWeight * EstimatorService.bodyFat(config.height, config.abdomen,config.neck, config.hips) / 100;
         }
         leanMass = config.bodyWeight - fatMass;
         calorieIntake = EstimatorService.basalMetabolicRate(leanMass);
@@ -145,20 +146,20 @@ angular.app("BeyondHuman").factory("DietModelingService", function (EstimatorSer
         for (i = 0; i < config.duration; i++) {
             dietModelResults.push(modelDietWeek(leanMass, fatMass, maxLeanMass, config.massPreservationCoefficient,
                                                 adaptiveThermogenesis, config.activityLevel,
-                                                config.dailyExerciseCalorieUtilization));
+                                                config.exerciseCalorieExpenditure, config.weeklyExerciseSessions));
             calorieIntakeDelta = calorieIntake - dietModelResults[i].dailyCalorieIntake;
             adaptiveThermogenesisDelta = (0.14 * calorieIntakeDelta - adaptiveThermogenesis) / 2;
             adaptiveThermogenesis += adaptiveThermogenesisDelta;
             calorieIntake = dietModelResults[i].dailyCalorieIntake;
         }
-
+        return dietModelResults;
     };
 
     modelDietWeek = function (leanMass, fatMass, maxLeanMass, massPreservationCoefficient, adaptiveThermogenesis,
-                              activityLevel, dailyExerciseCalorieUtilization) {
-        var potentialMuscleGain, dailyDeficit, maxDailyDeficit, basalMetabolicRate, dailyBasalEnergyExpenditure,
-            weeklyDeficit, deficitAboveMaximum, muscleGain,
-            muscleGainCalorieRequirement, fatLoss, dailyEnergyExpenditure, dailyCalorieIntake, activityExpenditure;
+                              activityLevel, exerciseCalorieExpenditure, weeklyExerciseSessions) {
+        var potentialMuscleGain, dailyDeficit, maxDailyDeficit, basalMetabolicRate, weeklyDeficit,
+            deficitAboveMaximum, muscleGain, muscleGainCalorieRequirement, fatLoss, dailyEnergyExpenditure,
+            dailyCalorieIntake, activityExpenditure;
         /* first, we need to figure out how much muscle could be gained, and how much is actually gained based on the
            potential losses resulting from the mass preservation coefficient */
         potentialMuscleGain = EstimatorService.dailyMuscleGain(leanMass, maxLeanMass);
@@ -173,10 +174,9 @@ angular.app("BeyondHuman").factory("DietModelingService", function (EstimatorSer
         muscleGainCalorieRequirement = EstimatorService.muscleGainCalorieRequirement(muscleGain);
         activityExpenditure = EstimatorService.activityExpenditure(leanMass, fatMass, activityLevel);
         basalMetabolicRate = EstimatorService.basalMetabolicRate(leanMass) * 0.86 + adaptiveThermogenesis;
-        dailyBasalEnergyExpenditure = basalMetabolicRate + activityExpenditure + muscleGainCalorieRequirement;
-        dailyEnergyExpenditure = dailyBasalEnergyExpenditure + dailyExerciseCalorieUtilization;
-        dailyCalorieIntake = dailyBasalEnergyExpenditure - dailyDeficit;
-        weeklyDeficit = (dailyEnergyExpenditure - dailyCalorieIntake) * 7;
+        dailyEnergyExpenditure = basalMetabolicRate + activityExpenditure + muscleGainCalorieRequirement;
+        dailyCalorieIntake = dailyEnergyExpenditure - dailyDeficit;
+        weeklyDeficit = exerciseCalorieExpenditure * weeklyExerciseSessions + (dailyEnergyExpenditure - dailyCalorieIntake) * 7;
         fatLoss = weeklyDeficit / 3500;
         return {
             leanMass: leanMass + muscleGain,
