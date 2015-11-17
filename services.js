@@ -6,7 +6,7 @@ angular.module("BeyondHuman").factory("EstimatorService", function () {
     var navyBodyFatEstimator, maximumLeanBodyMassEstimator, basalMetabolicRateEstimator, monthlyMuscleGainEstimator,
         weeklyMuscleGainEstimator, dailyMuscleGainEstimator, trainingAgeEstimator, dailyMaximumDietaryDeficitEstimator,
         muscleGainCalorieRequirementEstimator, muscleGainForCaloriesEstimator, activityExpenditureEstimator,
-        metabolicRateReductionEstimator;
+        adaptiveThermogenesisEstimator, lowBodyFatMetabolicRateCorrectionEstimator;
 
     var a = 0.22775197106766698, b = -0.024346985716006797;
 
@@ -44,26 +44,31 @@ angular.module("BeyondHuman").factory("EstimatorService", function () {
         return 370 + (21.6 * leanMass / 2.2)
     };
 
-    metabolicRateReductionEstimator = function (fatMass, oldCalorieIntake, newCalorieIntake, adaptiveThermogenesis) {
+    adaptiveThermogenesisEstimator = function (oldCalorieIntake, newCalorieIntake, adaptiveThermogenesis) {
         /* Models the change in metabolic rate over a week period.
          *
          * This function uses the model for change in adaptive thermogenesis postulated in:
          *   Quantification of the effect of energy imbalance on bodyweight.
          *   http://www.ncbi.nlm.nih.gov/pubmed/21872751
-         *
-         * TODO: Additionally, a second term is used based on:
-         *   Adaptive reduction in basal metabolic rate in response to food deprivation in humans: a role for feedback
-         *   signals from fat stores.
-         *   http://www.ncbi.nlm.nih.gov/pubmed/9734736
          */
         var dailyCalorieIntakeChange = oldCalorieIntake - newCalorieIntake;
         return adaptiveThermogenesis + (0.14 * dailyCalorieIntakeChange - adaptiveThermogenesis) / 2;
     };
 
+    lowBodyFatMetabolicRateCorrectionEstimator = function (bodyFatPercentage, metabolicRate) {
+        /*   Rough guess figure based on anecdotal reports and eyeballing graphs in:
+         *
+         *   Adaptive reduction in basal metabolic rate in response to food deprivation in humans: a role for feedback
+         *   signals from fat stores.
+         *   http://www.ncbi.nlm.nih.gov/pubmed/9734736
+         */
+        return (100 + Math.min(bodyFatPercentage - 20, 0))/100 * metabolicRate;
+    };
+
     monthlyMuscleGainEstimator = function (leanMass, maxLeanMass) {
         var trainingAge, endingLeanMass;
         trainingAge = trainingAgeEstimator(leanMass, maxLeanMass);
-        endingLeanMass = a * Math.log(trainingAge + 1);
+        endingLeanMass = maxLeanMass * a * Math.log(trainingAge + 1);
         return endingLeanMass - leanMass;
     };
 
@@ -98,7 +103,8 @@ angular.module("BeyondHuman").factory("EstimatorService", function () {
         maximumLeanBodyMass: maximumLeanBodyMassEstimator,
         activityExpenditure: activityExpenditureEstimator,
         basalMetabolicRate: basalMetabolicRateEstimator,
-        metabolicRateReduction: metabolicRateReductionEstimator,
+        adaptiveThermogensis: adaptiveThermogenesisEstimator,
+        lowBodyFatMetabolicRateCorrection: lowBodyFatMetabolicRateCorrectionEstimator,
         weeklyMuscleGain: weeklyMuscleGainEstimator,
         dailyMuscleGain: dailyMuscleGainEstimator,
         dailyMaximumDietaryDeficit: dailyMaximumDietaryDeficitEstimator,
@@ -129,7 +135,7 @@ angular.module("BeyondHuman").factory("DietModelingService", function (Estimator
      * - weeklyExerciseSessions: the number of fasted low intensity cardio sessions performed per week
      */
     modelDiet = function (config) {
-        var i, fatMass, leanMass, maxLeanMass, calorieIntake, calorieIntakeDelta, adaptiveThermogenesis,
+        var i, fatMass, leanMass, maxLeanMass, calorieIntake, adaptiveThermogenesis,
             adaptiveThermogenesisDelta, dietModelResults = [];
         // first we need to figure out the fat mass, which we will use to get lean mass and a variety of other things
         if (config.bodyFatPercentage) {
@@ -144,13 +150,17 @@ angular.module("BeyondHuman").factory("DietModelingService", function (Estimator
            when calculating deficits */
         maxLeanMass = EstimatorService.maximumLeanBodyMass(config.height, config.wrist, config.ankle);
         for (i = 0; i < config.duration; i++) {
-            dietModelResults.push(modelDietWeek(leanMass, fatMass, maxLeanMass, config.massPreservationCoefficient,
-                                                adaptiveThermogenesis, config.activityLevel,
-                                                config.exerciseCalorieExpenditure, config.weeklyExerciseSessions));
-            calorieIntakeDelta = calorieIntake - dietModelResults[i].dailyCalorieIntake;
-            adaptiveThermogenesisDelta = (0.14 * calorieIntakeDelta - adaptiveThermogenesis) / 2;
-            adaptiveThermogenesis += adaptiveThermogenesisDelta;
+            dietModelResults.push(modelDietWeek(leanMass, fatMass, maxLeanMass, config.massPreservationCoefficient || 1,
+                                                adaptiveThermogenesis, config.activityLevel || 1.2,
+                                                config.exerciseCalorieExpenditure || 0, config.weeklyExerciseSessions || 0));
+            adaptiveThermogenesis = EstimatorService.adaptiveThermogensis(
+                    calorieIntake,
+                    dietModelResults[i].dailyCalorieIntake,
+                    adaptiveThermogenesis
+            );
             calorieIntake = dietModelResults[i].dailyCalorieIntake;
+            leanMass = dietModelResults[i].leanMass;
+            fatMass = dietModelResults[i].fatMass;
         }
         return dietModelResults;
     };
@@ -159,7 +169,7 @@ angular.module("BeyondHuman").factory("DietModelingService", function (Estimator
                               activityLevel, exerciseCalorieExpenditure, weeklyExerciseSessions) {
         var potentialMuscleGain, dailyDeficit, maxDailyDeficit, basalMetabolicRate, weeklyDeficit,
             deficitAboveMaximum, muscleGain, muscleGainCalorieRequirement, fatLoss, dailyEnergyExpenditure,
-            dailyCalorieIntake, activityExpenditure;
+            bodyFatPercentage, dailyCalorieIntake, activityExpenditure;
         /* first, we need to figure out how much muscle could be gained, and how much is actually gained based on the
            potential losses resulting from the mass preservation coefficient */
         potentialMuscleGain = EstimatorService.dailyMuscleGain(leanMass, maxLeanMass);
@@ -172,9 +182,10 @@ angular.module("BeyondHuman").factory("DietModelingService", function (Estimator
             muscleGain = potentialMuscleGain;
         }
         muscleGainCalorieRequirement = EstimatorService.muscleGainCalorieRequirement(muscleGain);
+        bodyFatPercentage = fatMass / (leanMass + fatMass);
         activityExpenditure = EstimatorService.activityExpenditure(leanMass, fatMass, activityLevel);
         basalMetabolicRate = EstimatorService.basalMetabolicRate(leanMass) * 0.86 + adaptiveThermogenesis;
-        dailyEnergyExpenditure = basalMetabolicRate + activityExpenditure + muscleGainCalorieRequirement;
+        dailyEnergyExpenditure = EstimatorService.lowBodyFatMetabolicRateCorrection(bodyFatPercentage, basalMetabolicRate + activityExpenditure) + muscleGainCalorieRequirement;
         dailyCalorieIntake = dailyEnergyExpenditure - dailyDeficit;
         weeklyDeficit = exerciseCalorieExpenditure * weeklyExerciseSessions + (dailyEnergyExpenditure - dailyCalorieIntake) * 7;
         fatLoss = weeklyDeficit / 3500;
