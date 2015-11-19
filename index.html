@@ -13,57 +13,164 @@
     <title>Title</title>
 </head>
 <body ng-controller="MainController">
-    <div class="container-fluid">
+<div class="container">
+    <form class="form-group">
         <div class="row">
-            <form class="form-group">
-                <label>Diet duration <input type="number" class="form-control" id="diet-duration" ng-model="config.duration"></label>
-                <label>Body weight (lbs) <input type="number" step="0.01" class="form-control" id="body-weight" ng-model="config.bodyWeight"></label>
-                <label>Body fat (%) <input type="number" step="0.01" class="form-control" id="body-fat-percentage" ng-model="config.bodyFatPercentage"></label>
-                <label>Female <input type="checkbox" class="form-control" id="female" ng-model="female"></label>
-                <label>Height (inches) <input type="number" step="0.01" class="form-control" id="height" ng-model="config.height"></label>
-                <label>Abdomen circumference (inches) <input type="number" step="0.01" class="form-control" id="abdomen" ng-model="config.abdomen"></label>
-                <label>Neck circumference (inches) <input type="number" step="0.01" class="form-control" id="neck" ng-model="config.neck"></label>
-                <label ng-if="female">Hips circumferences (inches) <input type="number" step="0.01" class="form-control" id="hips" ng-model="config.hips"></label>
-                <label>Wrist circumference (inches) <input type="number" step="0.01" class="form-control" id="wrist" ng-model="config.wrist"></label>
-                <label>Ankle circumference (inches) <input type="number" step="0.01" class="form-control" id="ankle" ng-model="config.ankle"></label>
-                <label>Mass preservation coefficient <input type="range" value="1" step="0.1" min="0.5" max="1.5" step="0.1" class="form-control" id="mass-preservation-coefficient" ng-model="config.massPreservationCoefficient"></label>
-                <label>Work Activity level <select class="form-control" id="activity-level" ng-model="config.activityLevel">
+            <label>Diet duration <input type="number" class="form-control" id="diet-duration"
+                                        ng-model="config.duration"></label>
+
+        </div>
+        <!-- disabling support for females initially due to poor research support
+        <label>Female <input type="checkbox" class="form-control" id="female" ng-model="female"></label> -->
+        <hr/>
+        <div class="row">
+            <h3>Tell us a bit about yourself</h3>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="body-weight">Body weight (lbs)</label> <input type="number" step="0.01"
+                                                                              class="form-control"
+                                                                              id="body-weight"
+                                                                              ng-model="config.bodyWeight">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="height">Height (inches)</label> <input type="number" step="0.01" class="form-control"
+                                                                       id="height"
+                                                                       ng-model="config.height">
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <p>In order to accurately plan your diet, it is critical to know your starting body fat percentage. If you
+                have had your body composition assessed recently using a high accuracy method such as DXA or hydrostatic
+                weighing, go ahead and enter it here. If you don't know your body fat percentage, we can attempt to
+                estimate it based on your abdomen and neck circumference, though this will impact the quality of the
+                resulting diet plan.</p>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="body-fat-percentage">Body fat (%)</label> <input type="number" step="0.01"
+                                                                                 class="form-control"
+                                                                                 id="body-fat-percentage"
+                                                                                 ng-model="config.bodyFatPercentage">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="abdomen">Abdomen circumference (inches)</label> <input type="number" step="0.01"
+                                                                                       class="form-control" id="abdomen"
+                                                                                       ng-model="config.abdomen">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="neck">Neck circumference (inches)</label> <input type="number" step="0.01"
+                                                                                 class="form-control" id="neck"
+                                                                                 ng-model="config.neck">
+                </div>
+            </div>
+        </div>
+        <label ng-if="female">Hips circumferences (inches) <input type="number" step="0.01" class="form-control"
+                                                                  id="hips" ng-model="config.hips"></label>
+        <hr/>
+        <div class="row">
+            <h3>Estimating rate of muscle gain</h3>
+
+            <p>In order to accurately factor in muscle gain when assessing your dietary needs, we need to estimate your
+                rate
+                of muscle gain. To do this, we find an <a href="http://www.weightrainer.net/potential.html">estimate of
+                    your maximum drug free muscle mass potential</a>, then work backwards from that using our estimate
+                of your current
+                lean body mass to find your <a href="#"
+                                               uib-tooltip="An estimate of the amount of time it would take given consistent diet and training to reach the current level of muscularity">training
+                    age</a>. Given your training age, we can estimate the rate of muscle gain using a formula based on
+                empirical observations of muscle mass accrual in drug free trainees.</p>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="wrist">Wrist circumference (inches)</label> <input type="number" step="0.01"
+                                                                                   class="form-control" id="wrist"
+                                                                                   ng-model="config.wrist">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="ankle">Ankle circumference (inches)</label> <input type="number" step="0.01"
+                                                                                   class="form-control" id="ankle"
+                                                                                   ng-model="config.ankle">
+                </div>
+            </div>
+        </div>
+        <hr/>
+        <label>Mass preservation coefficient <input type="range" value="1" step="0.1" min="0.5" max="1.5" step="0.1"
+                                                    class="form-control" id="mass-preservation-coefficient"
+                                                    ng-model="config.massPreservationCoefficient"></label>
+        <hr/>
+        <h3>Calorie expenditure</h3>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="maintenance-calories">Maintenance calories</label> <input type="number"
+                                                                                          class="form-control"
+                                                                                          id="maintenance-calories"
+                                                                                          ng-model="config.maintenanceCalories">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="activity-level">Occupational activity level</label> <select class="form-control"
+                                                                                            id="activity-level"
+                                                                                            ng-model="config.activityLevel">
                     <option value="1.2">Primarily seated</option>
                     <option value="1.375">Moderate standing/light movement</option>
                     <option value="1.55">Primarily standing/frequent movement</option>
                     <option value="1.725">Manual labor (light lifting/carrying)</option>
                     <option value="1.9">Manual labor (heavy lifting/carrying)</option>
-                </select></label>
-                <label>Fasted exercise calorie expenditure <input type="number" step="0.1" class="form-control" id="exercise-calorie-expenditure" ng-model="config.exerciseCalorieExpenditure"></label>
-                <label>Weekly fasted exercise sessions <input type="number" class="form-control" id="weekly-exercise-sessions" ng-model="config.weeklyExerciseSessions"></label>
-                <button ng-click="computeModel()">Compute</button>
-            </form>
+                </select>
+                </div>
+            </div>
         </div>
-        <div class="row" ng-show="dietPlan">
-            <table class="table table-striped">
-                <th>
-                    <tr>
-                        <td>Daily energy expenditure</td>
-                        <td>Daily calorie intake</td>
-                        <td>Weight</td>
-                        <td>Body fat percent</td>
-                        <td>Lean mass</td>
-                        <td>Fat mass</td>
-                    </tr>
-                </th>
-                <tbody>
-                <tr ng-repeat="week in dietPlan">
-                    <td>{{ week.dailyEnergyExpenditure }}</td>
-                    <td>{{ week.dailyCalorieIntake }}</td>
-                    <td>{{ week.leanMass + week.fatMass }}</td>
-                    <td>{{ week.fatMass / (week.fatMass + week.leanMass) * 100 }}</td>
-                    <td>{{ week.leanMass }}</td>
-                    <td>{{ week.fatMass }}</td>
+        <div class="row">
+            <label>Fasted exercise calorie expenditure <input type="number" step="0.1" class="form-control"
+                                                              id="exercise-calorie-expenditure"
+                                                              ng-model="config.exerciseCalorieExpenditure"></label>
+            <label>Weekly fasted exercise sessions <input type="number" class="form-control"
+                                                          id="weekly-exercise-sessions"
+                                                          ng-model="config.weeklyExerciseSessions"></label>
+        </div>
+        <button ng-click="computeModel()">Compute</button>
+    </form>
+    <div class="row" ng-show="dietPlan">
+        <table class="table table-striped">
+            <th>
+                <tr>
+                    <td>Daily energy expenditure</td>
+                    <td>Daily calorie intake</td>
+                    <td>Weight</td>
+                    <td>Body fat percent</td>
+                    <td>Lean mass</td>
+                    <td>Fat mass</td>
                 </tr>
-               <tbody>
-            </table>
-        </div>
+            </th>
+            <tbody>
+            <tr ng-repeat="week in dietPlan">
+                <td>{{ week.dailyEnergyExpenditure }}</td>
+                <td>{{ week.dailyCalorieIntake }}</td>
+                <td>{{ week.leanMass + week.fatMass }}</td>
+                <td>{{ week.fatMass / (week.fatMass + week.leanMass) * 100 }}</td>
+                <td>{{ week.leanMass }}</td>
+                <td>{{ week.fatMass }}</td>
+            </tr>
+            <tbody>
+        </table>
     </div>
+</div>
 </body>
 <script src="angular.min.js"></script>
 <script src="ui-bootstrap-tpls-0.14.3.min.js"></script>
