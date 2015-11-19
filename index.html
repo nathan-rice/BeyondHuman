@@ -111,8 +111,16 @@
                                                     class="form-control" id="mass-preservation-coefficient"
                                                     ng-model="config.massPreservationCoefficient"></label>
         <hr/>
-        <h3>Calorie expenditure</h3>
+        <div class="row">
+            <h3>Calorie expenditure</h3>
 
+            <p>In order to provide accurate calorie intake targets, we need to know how many calories you expend during
+                a
+                normal day. If you have empirically determined your maintenance calorie intake, you can enter it here.
+                Otherwise, we can try to estimate it using your lean body mass, with a correction for activity performed
+                as
+                part of typical working day.</p>
+        </div>
         <div class="row">
             <div class="col-md-6">
                 <div class="form-group">
@@ -137,12 +145,18 @@
             </div>
         </div>
         <div class="row">
-            <label>Fasted exercise calorie expenditure <input type="number" step="0.1" class="form-control"
+            <p>In order to maintain a reasonable rate of fat loss as fat mass decreases, it is necessary to incorporate
+                fasted cardiovascular training. The reason this is necessary is due to the fact that the rate lipolysis
+                in fat cells is the limiting factor in the speed of weight loss at low bodyfat levels, and
+                the lipolytic response to cardiovascular training is significantly blunted in the fed state.</p>
+        </div>
+        <div class="row">
+            <label for="exercise-calorie-expenditure">Fasted exercise calorie expenditure</label> <input type="number" step="0.1" class="form-control"
                                                               id="exercise-calorie-expenditure"
-                                                              ng-model="config.exerciseCalorieExpenditure"></label>
-            <label>Weekly fasted exercise sessions <input type="number" class="form-control"
+                                                              ng-model="config.exerciseCalorieExpenditure">
+            <label for="weekly-exercise-sessions">Weekly fasted exercise sessions</label> <input type="number" class="form-control"
                                                           id="weekly-exercise-sessions"
-                                                          ng-model="config.weeklyExerciseSessions"></label>
+                                                          ng-model="config.weeklyExerciseSessions">
         </div>
         <button ng-click="computeModel()">Compute</button>
     </form>
