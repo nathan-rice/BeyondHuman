@@ -160,7 +160,7 @@
         </div>
         <button ng-click="computeModel()">Compute</button>
     </form>
-    <div class="row" ng-show="dietPlan">
+    <div class="row" ng-if="dietPlan">
         <table class="table table-striped">
             <th>
                 <tr>
@@ -184,11 +184,17 @@
             <tbody>
         </table>
     </div>
+    <div class="row" ng-if="dietPlan">
+        <line-plot title="Predicted body mass" plot-data="dietPlan | bodyMassPlotPreprocessor"></line-plot>
+    </div>
 </div>
 </body>
 <script src="angular.min.js"></script>
 <script src="ui-bootstrap-tpls-0.14.3.min.js"></script>
+<script src="Chart.js"></script>
 <script src="init.js"></script>
 <script src="services.js"></script>
+<script src="directives.js"></script>
+<script src="filters.js"></script>
 <script src="controllers.js"></script>
 </html>
