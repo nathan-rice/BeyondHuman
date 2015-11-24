@@ -185,7 +185,19 @@
         </table>
     </div>
     <div class="row" ng-if="dietPlan">
-        <line-plot title="Predicted body mass" plot-data="dietPlan | bodyMassPlotPreprocessor"></line-plot>
+        <line-plot title="Predicted weight" plot-data="dietPlan | bodyWeightPlotPreprocessor"></line-plot>
+        <uib-tabset>
+            <uib-tab heading="Body weight">
+
+            </uib-tab>
+            <uib-tab heading="Percent body fat">
+                <line-plot title="Predicted percent body fat" plot-data="dietPlan | bodyFatPercentPlotPreprocessor"></line-plot>
+            </uib-tab>
+            <uib-tab heading="Calorie intake and expenditure">
+                <line-plot title="Predicted percent body fat" plot-data="dietPlan | caloriesInOutPlotPreprocessor"></line-plot>
+            </uib-tab>
+        </uib-tabset>
+
     </div>
 </div>
 </body>
