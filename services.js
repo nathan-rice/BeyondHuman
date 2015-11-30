@@ -68,7 +68,7 @@ angular.module("BeyondHuman").factory("EstimatorService", function () {
     monthlyMuscleGainEstimator = function (leanMass, maxLeanMass) {
         var trainingAge, endingLeanMass;
         trainingAge = trainingAgeEstimator(leanMass, maxLeanMass);
-        endingLeanMass = maxLeanMass * a * Math.log(trainingAge + 1);
+        endingLeanMass = maxLeanMass * (a * Math.log(trainingAge + 1) + b);
         return endingLeanMass - leanMass;
     };
 
@@ -161,10 +161,10 @@ angular.module("BeyondHuman").factory("DietModelingService", function (Estimator
                 config.exerciseCalorieExpenditure || 0, config.weeklyExerciseSessions || 0));
             adaptiveThermogenesis = EstimatorService.adaptiveThermogenesis(
                 calorieIntake,
-                dietModelResults[i].dailyCalorieIntake,
+                dietModelResults[i].calorieIntake,
                 adaptiveThermogenesis
             );
-            calorieIntake = dietModelResults[i].dailyCalorieIntake;
+            calorieIntake = dietModelResults[i].calorieIntake;
             leanMass = dietModelResults[i].leanMass;
             fatMass = dietModelResults[i].fatMass;
         }
@@ -203,8 +203,8 @@ angular.module("BeyondHuman").factory("DietModelingService", function (Estimator
         return {
             leanMass: leanMass + muscleGain,
             fatMass: fatMass - fatLoss,
-            dailyEnergyExpenditure: energyExpenditure,
-            dailyCalorieIntake: calorieIntake
+            energyExpenditure: energyExpenditure,
+            calorieIntake: calorieIntake
         }
     };
 

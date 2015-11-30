@@ -4,20 +4,16 @@
 
 angular.module("BeyondHuman").directive("linePlot", function () {
     function link(scope, element, attrs) {
-        var canvas = document.createElement("canvas"), chart;
+        var div = document.createElement("div"), chart, chartOptions;
 
-        element[0].appendChild(canvas);
-        chart = new Chart(canvas.getContext('2d'));
-        // for some reason scope.data is a function???
-        chart.Line(scope.data());
+        chartOptions = {
+            title: "test",
+            chartArea: {width: "65%", height: "85%"}
+        };
 
-        //scope.$watchCollection("data", function (scopeData) {
-        //    if (scopeData) {
-        //        chart.Line(scopeData);
-        //    }
-        //});
-
-
+        element[0].appendChild(div);
+        chart = new google.visualization.LineChart(div);
+        chart.draw(google.visualization.arrayToDataTable(scope.data()), chartOptions);
     }
 
     return {

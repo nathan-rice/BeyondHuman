@@ -47,11 +47,20 @@
             <p>In order to accurately plan your diet, it is critical to know your starting body fat percentage. If you
                 have had your body composition assessed recently using a high accuracy method such as DXA or hydrostatic
                 weighing, go ahead and enter it here. If you don't know your body fat percentage, we can attempt to
-                estimate it based on your abdomen and neck circumference, though this will impact the quality of the
+                estimate it based on your abdomen and neck circumference, or from caliper skin-fold measurements. Be
+                aware these estimation methods are highly inexact, and their use will impact the quality of the
                 resulting diet plan.</p>
         </div>
         <div class="row">
-            <div class="col-md-4">
+            <div class="checkbox"><label><input type="radio" ng-model="bodyfatMethod" value="direct"> I will provide
+                my body fat percent</label></div>
+            <div class="checkbox"><label><input type="radio" ng-model="bodyfatMethod" value="navy"> Estimate my body
+                fat percent using my abdomen and neck circumference</label></div>
+            <div class="checkbox"><label><input type="radio" ng-model="bodyfatMethod" value="skinfold"> Estimate my
+                body fat percent using caliper skin-fold measurements</label></div>
+        </div>
+        <div class="row">
+            <div class="col-md-12" ng-show="bodyfatMethod == 'direct'">
                 <div class="form-group">
                     <label for="body-fat-percentage">Body fat (%)</label> <input type="number" step="0.01"
                                                                                  class="form-control"
@@ -59,18 +68,39 @@
                                                                                  ng-model="config.bodyFatPercentage">
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6" ng-show="bodyfatMethod == 'navy'">
                 <div class="form-group">
                     <label for="abdomen">Abdomen circumference (inches)</label> <input type="number" step="0.01"
                                                                                        class="form-control" id="abdomen"
                                                                                        ng-model="config.abdomen">
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6" ng-show="bodyfatMethod == 'navy'">
                 <div class="form-group">
                     <label for="neck">Neck circumference (inches)</label> <input type="number" step="0.01"
                                                                                  class="form-control" id="neck"
                                                                                  ng-model="config.neck">
+                </div>
+            </div>
+            <div class="col-md-4" ng-show="bodyfatMethod == 'skinfold'">
+                <div class="form-group">
+                    <label for="chest">Chest skin-fold measurement (mm)</label> <input type="number" step="0.01"
+                                                                                       class="form-control" id="chest"
+                                                                                       ng-model="config.skinfold.chest">
+                </div>
+            </div>
+            <div class="col-md-4" ng-show="bodyfatMethod == 'skinfold'">
+                <div class="form-group">
+                    <label for="abdomen-skinfold">Abdomen skin-fold measurement (mm)</label> <input type="number" step="0.01"
+                                                                                       class="form-control" id="abdomen-skinfold"
+                                                                                       ng-model="config.skinfold.abdomen">
+                </div>
+            </div>
+            <div class="col-md-4" ng-show="bodyfatMethod == 'skinfold'">
+                <div class="form-group">
+                    <label for="thigh">Thigh skin-fold measurement (mm)</label> <input type="number" step="0.01"
+                                                                                       class="form-control" id="thigh"
+                                                                                       ng-model="config.skinfold.thigh">
                 </div>
             </div>
         </div>
@@ -151,59 +181,108 @@
                 the lipolytic response to cardiovascular training is significantly blunted in the fed state.</p>
         </div>
         <div class="row">
-            <label for="exercise-calorie-expenditure">Fasted exercise calorie expenditure</label> <input type="number" step="0.1" class="form-control"
-                                                              id="exercise-calorie-expenditure"
-                                                              ng-model="config.exerciseCalorieExpenditure">
-            <label for="weekly-exercise-sessions">Weekly fasted exercise sessions</label> <input type="number" class="form-control"
-                                                          id="weekly-exercise-sessions"
-                                                          ng-model="config.weeklyExerciseSessions">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="exercise-calorie-expenditure">Fasted exercise calorie expenditure</label> <input
+                        type="number" step="0.1" class="form-control"
+                        id="exercise-calorie-expenditure"
+                        ng-model="config.exerciseCalorieExpenditure">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="weekly-exercise-sessions">Weekly fasted exercise sessions</label> <input type="number"
+                                                                                                         class="form-control"
+                                                                                                         id="weekly-exercise-sessions"
+                                                                                                         ng-model="config.weeklyExerciseSessions">
+                </div>
+            </div>
+        </div>
+        <hr/>
+        <div class="row">
+            <h3>Refeeds</h3>
+
+            <p>It is a good idea to schedule refeeds into any diet plan. Refeeds are beneficial because they break up
+                the monotony of dieting, allow glycogen replenishment, raise your metabolic rate and normalize hormone
+                levels.</p>
+
+            <p>The leaner you are, the more important refeeds become. For people above 12% bodyfat, one refeed per week
+                is sufficient. From 8% to 12%, two refeeds per week is generally advisable. Below 8% bodyfat, three
+                refeeds per week is recommended.</p>
+
+            <p>Generally, it is a good idea to schedule refeeds on workout days. If you work out more than three times
+                per week, you should schedule refeeds to coincide with your highest volume workouts.</p>
+            <label>Refeed days</label>
+        </div>
+        <div class="row">
+            <div class="col-sm-2"><label class="checkbox-inline"><input type="checkbox"
+                                                                        ng-model="config.refeeds.monday">Monday</label>
+            </div>
+            <div class="col-sm-2"><label class="checkbox-inline"><input type="checkbox"
+                                                                        ng-model="config.refeeds.tuesday">Tuesday</label>
+            </div>
+            <div class="col-sm-2"><label class="checkbox-inline"><input type="checkbox"
+                                                                        ng-model="config.refeeds.wednesday">Wednesday</label>
+            </div>
+            <div class="col-sm-2"><label class="checkbox-inline"><input type="checkbox"
+                                                                        ng-model="config.refeeds.thursday">Thursday</label>
+            </div>
+            <div class="col-sm-2"><label class="checkbox-inline"><input type="checkbox"
+                                                                        ng-model="config.refeeds.friday">Friday</label>
+            </div>
+            <div class="col-sm-2"><label class="checkbox-inline"><input type="checkbox"
+                                                                        ng-model="config.refeeds.saturday">Saturday</label>
+            </div>
+            <div class="col-sm-2"><label class="checkbox-inline"><input type="checkbox"
+                                                                        ng-model="config.refeeds.Sunday">Sunday</label>
+            </div>
         </div>
         <button ng-click="computeModel()">Compute</button>
     </form>
     <div class="row" ng-if="dietPlan">
         <table class="table table-striped">
-            <th>
-                <tr>
-                    <td>Daily energy expenditure</td>
-                    <td>Daily calorie intake</td>
-                    <td>Weight</td>
-                    <td>Body fat percent</td>
-                    <td>Lean mass</td>
-                    <td>Fat mass</td>
-                </tr>
-            </th>
-            <tbody>
-            <tr ng-repeat="week in dietPlan">
-                <td>{{ week.dailyEnergyExpenditure }}</td>
-                <td>{{ week.dailyCalorieIntake }}</td>
-                <td>{{ week.leanMass + week.fatMass }}</td>
-                <td>{{ week.fatMass / (week.fatMass + week.leanMass) * 100 }}</td>
-                <td>{{ week.leanMass }}</td>
-                <td>{{ week.fatMass }}</td>
+            <thead>
+            <tr>
+                <td>Daily energy expenditure</td>
+                <td>Daily calorie intake</td>
+                <td>Weight</td>
+                <td>Body fat percent</td>
+                <td>Lean mass</td>
+                <td>Fat mass</td>
             </tr>
+            </thead>
             <tbody>
+            <tr ng-repeat="day in dietPlan">
+                <td>{{ day.energyExpenditure | number:2 }}</td>
+                <td>{{ day.calorieIntake | number:2 }}</td>
+                <td>{{ day.leanMass + day.fatMass | number:2 }}</td>
+                <td>{{ day.fatMass / (day.fatMass + day.leanMass) * 100 | number:2 }}</td>
+                <td>{{ day.leanMass | number:2 }}</td>
+                <td>{{ day.fatMass | number:2 }}</td>
+            </tr>
+            </tbody>
         </table>
     </div>
     <div class="row" ng-if="dietPlan">
-        <line-plot title="Predicted weight" plot-data="dietPlan | bodyWeightPlotPreprocessor"></line-plot>
-        <uib-tabset>
+        <line-plot plot-data="dietPlan | bodyWeightPlotPreprocessor"></line-plot>
+        <uib-tabset justified="true">
             <uib-tab heading="Body weight">
-
+                <line-plot plot-data="dietPlan | bodyWeightPlotPreprocessor"></line-plot>
             </uib-tab>
             <uib-tab heading="Percent body fat">
-                <line-plot title="Predicted percent body fat" plot-data="dietPlan | bodyFatPercentPlotPreprocessor"></line-plot>
+                <line-plot plot-data="dietPlan | bodyFatPercentPlotPreprocessor"></line-plot>
             </uib-tab>
             <uib-tab heading="Calorie intake and expenditure">
-                <line-plot title="Predicted percent body fat" plot-data="dietPlan | caloriesInOutPlotPreprocessor"></line-plot>
+                <line-plot plot-data="dietPlan | caloriesInOutPlotPreprocessor"></line-plot>
             </uib-tab>
         </uib-tabset>
-
     </div>
 </div>
 </body>
+<script type="text/javascript"
+        src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization','version':'1','packages':['corechart']}]}"></script>
 <script src="angular.min.js"></script>
 <script src="ui-bootstrap-tpls-0.14.3.min.js"></script>
-<script src="Chart.js"></script>
 <script src="init.js"></script>
 <script src="services.js"></script>
 <script src="directives.js"></script>

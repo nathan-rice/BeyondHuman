@@ -4,42 +4,33 @@
 
 angular.module("BeyondHuman").filter("bodyWeightPlotPreprocessor", function () {
     return function(input) {
-        var i, X = [], weight = {label: 'Weight'}, weightY = [], leanMass = {label: 'Lean Body Mass'}, leanMassY = [];
+        var i, data = [["Day", "Weight", "Lean Body Mass"]];
         if (!input) return null;
         for (i = 0; i < input.length; i++) {
-            X.push(i+1);
-            weightY.push(input[i].leanMass + input[i].fatMass);
-            leanMassY.push(input[i].leanMass);
+            data.push([i+1, input[i].leanMass + input[i].fatMass, input[i].leanMass]);
         }
-        weight.data = weightY;
-        leanMass.data = leanMassY;
-        return {labels: X, datasets: [weight, leanMass]};
+        return data;
     }
 });
 
 angular.module("BeyondHuman").filter("bodyFatPercentPlotPreprocessor", function () {
     return function(input) {
-        var i, bodyFatPercent, X = [], bodyFatPercentData = [];
+        var i, data = [["Day", "Body Fat %"]];
         if (!input) return null;
         for (i = 0; i < input.length; i++) {
-            bodyFatPercent = input[i].fatMass / (input[i].leanMass + input[i].fatMass);
-            X.push(i+1);
-            bodyFatPercentData.push(bodyFatPercent);
+            data.push([i+1, input[i].fatMass / (input[i].leanMass + input[i].fatMass)]);
         }
-        return {labels: X, datasets: [{label: 'Body Fat Percent', data: bodyFatPercentData}]};
+        return data;
     }
 });
 
 angular.module("BeyondHuman").filter("caloriesInOutPlotPreprocessor", function () {
     return function(input) {
-        var i, X = [], caloriesIn = {label: "Calorie Intake"}, caloriesInData = [],
-            caloriesOut = {label: "Calorie Expenditure"}, caloriesOutData = [];
+        var i, data = [["Day", "Calorie Intake", "Energy Expenditure"]];
         if (!input) return null;
         for (i = 0; i < input.length; i++) {
-            X.push(i+1);
-            caloriesInData.push(input[i].dailyCalorieIntake);
-            caloriesOutData.push(input[i].dailyEnergyExpenditure);
+            data.push([i+1, input[i].calorieIntake, input[i].energyExpenditure]);
         }
-        return {labels: X, datasets: [caloriesIn, caloriesOut]};
+        return data;
     }
 });
