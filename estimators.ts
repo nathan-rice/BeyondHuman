@@ -9,6 +9,13 @@ export function navyBodyFat(height, abdomen, neck) {
     return 86.010 * Math.log10(abdomen - neck) - 70.041 * Math.log10(height) + 36.76;
 }
 
+export function skinfoldBodyFat(chest, abdomen, thigh, age) {
+    let m = chest + abdomen + thigh,
+        n = Math.pow(m, 2),
+        bd = 1.1093800 - (0.0008267*m) + (0.0000016*n) - (0.0002574*age);
+    return 495/bd - 450;
+}
+
 export function maximumLeanBodyMass(height, wrist, ankle) {
     // uses the maximum lean body mass formula by Casey Butt
     var maxBodyWeight = Math.pow(height, 1.5) * (Math.sqrt(wrist) / 22.6670 + Math.sqrt(ankle) / 17.0104) * (10 / 224 + 1);
