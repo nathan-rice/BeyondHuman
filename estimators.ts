@@ -53,6 +53,10 @@ export function adaptiveThermogenesis(oldCalorieIntake, newCalorieIntake, adapti
     return adaptiveThermogenesis + (0.14 * dailyCalorieIntakeChange - adaptiveThermogenesis) / 14;
 }
 
+export function adaptiveThermogenesisCorrection(metabolicRate, adaptiveThermogenesis) {
+    return 0.86 * metabolicRate + 0.14 * adaptiveThermogenesis;
+}
+
 export function lowBodyFatCalorieExpenditureCorrection(bodyFatPercentage, metabolicRate) {
     /*   Rough guess figure based on anecdotal reports and eyeballing graphs in:
      *

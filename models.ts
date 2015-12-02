@@ -12,9 +12,14 @@ export interface IRefeedSchedule {
     Sunday?: number;
 }
 
-export class DietConfiguration {
-    constructor(public duration: number, public refeedSchedule: IRefeedSchedule, public massPreservationCoefficient: number,
-                public fastedExerciseCalorieExpenditure: number) {}
+export interface ICalorieExpenditureSchedule {
+    Monday: ICalorieExpenditure;
+    Tuesday: ICalorieExpenditure;
+    Wednesday: ICalorieExpenditure;
+    Thursday: ICalorieExpenditure;
+    Friday: ICalorieExpenditure;
+    Saturday: ICalorieExpenditure;
+    Sunday: ICalorieExpenditure;
 }
 
 export interface ISkinFoldMeasurements {
@@ -38,7 +43,6 @@ export interface IAnthrometrics {
 export class BodyComposition {
     private anthrometrics: IAnthrometrics;
     weight: number;
-    fatPercent: number;
     fatMass: number;
     leanMass: number;
     maxLeanMass: number;
@@ -46,21 +50,27 @@ export class BodyComposition {
     constructor(am: IAnthrometrics) {
         this.anthrometrics = am;
         this.weight = am.weight;
-        // first we need to figure out the fat mass, which we will use to get lean mass and a variety of other things
-        if (am.fatPercent) {
-            this.fatPercent = am.fatPercent;
-        } else if (am.skinfolds && am.age) {
-            this.fatPercent = estimators.skinfoldBodyFat(
-                am.skinfolds.chest,
-                am.skinfolds.abdomen,
-                am.skinfolds.thigh,
-                am.age)
-        } else if (am.abdomen && am.neck) {
-            this.fatPercent = estimators.navyBodyFat(am.height, am.abdomen, am.neck) / 100;
-        }
         this.fatMass = am.weight * am.fatPercent / 100;
         this.leanMass = am.weight - this.fatMass;
         this.maxLeanMass = estimators.maximumLeanBodyMass(am.height, am.wrist, am.ankle);
+    }
+
+    fatPercent(): number {
+        if (this.weight && this.fatMass) {
+            return this.fatMass / this.weight * 100;
+        }
+        else if (this.anthrometrics.fatPercent) {
+            return this.anthrometrics.fatPercent;
+        } else if (this.anthrometrics.skinfolds && this.anthrometrics.age) {
+            return estimators.skinfoldBodyFat(
+                this.anthrometrics.skinfolds.chest,
+                this.anthrometrics.skinfolds.abdomen,
+                this.anthrometrics.skinfolds.thigh,
+                this.anthrometrics.age)
+        } else if (this.anthrometrics.abdomen && this.anthrometrics.neck) {
+            return estimators.navyBodyFat(this.anthrometrics.height, this.anthrometrics.abdomen, this.anthrometrics.neck) / 100;
+        }
+        else return 20; // perhaps an exception should be raised instead?
     }
 
     copy(): BodyComposition {
@@ -87,35 +97,78 @@ export interface ICalorieExpenditure {
     fastedExerciseCalorieExpenditure?: number;
 }
 
+export class Diet {
+    constructor(private bodyComposition, public duration: number,
+                public calorieExpenditure: ICalorieExpenditureSchedule | ICalorieExpenditure,
+                public massPreservationCoefficient: number = 1, public refeedSchedule?: IRefeedSchedule) {}
+
+    model() : DietDay[] {
+        function getCalorieExpenditure(day) {
+            if (typeof this.calorieExpenditure === 'ICalorieExpenditureSchedule') {
+                return this.calorieExpenditure[Weekday[day % 7]];
+            }
+            else {
+                return this.calorieExpenditure;
+            }
+        }
+
+        function getCalorieDeficit(day) {
+            let deficit;
+            if (this.refeedSchedule) {
+                deficit = this.refeedSchedule[Weekday[day % 7]];
+            }
+            return deficit;
+        }
+
+        let day, dietDays = [], lastDietDay;
+        dietDays.push(new DietDay(this.bodyComposition, getCalorieExpenditure(0)));
+        for (day = 1; day < this.duration; day++) {
+            lastDietDay = dietDays[day - 1];
+            dietDays.push(new DietDay(lastDietDay.bodyComposition, getCalorieExpenditure(day),
+                lastDietDay.adaptiveThermogenesis, lastDietDay.calorieIntake, getCalorieDeficit(day)))
+        }
+        return dietDays;
+    }
+}
+
 export class DietDay {
     energyExpenditure: number;
     calorieIntake: number;
     bodyComposition: BodyComposition;
     bmr: number;
-    constructor (bc: BodyComposition, private ce: ICalorieExpenditure, public calorieDeficit: number,
-                 private priorCalorieIntake?: number, private adaptiveThermogenesis?: number) {
-        let fastedExerciseCalorieExpenditure = ce.fastedExerciseCalorieExpenditure || 0, baseEnergyExpenditure,
-            muscleGain = estimators.muscleGainCalorieRequirement(bc.dailyMuscleGain(calorieDeficit)),
-            bmr = estimators.basalMetabolicRate(bc.leanMass);
+    adaptiveThermogenesis: number;
+    private calorieDeficit: number;
+    private muscleGain;
+    private muscleGainCalories;
+    constructor (bc: BodyComposition, private ce: ICalorieExpenditure, adaptiveThermogenesis?: number,
+                 private priorCalorieIntake?: number, calorieDeficit?: number) {
+        this.calorieDeficit = this.calorieDeficit || bc.maxDeficit();
         this.bodyComposition = bc;
-        this.adaptiveThermogenesis = adaptiveThermogenesis || 0.14 * bmr;
+        this.muscleGain = bc.dailyMuscleGain(calorieDeficit);
+        this.muscleGainCalories = estimators.muscleGainCalorieRequirement(this.muscleGain);
+        let fastedExerciseCalorieExpenditure = ce.fastedExerciseCalorieExpenditure || 0, baseEnergyExpenditure,
+            baseBMR = estimators.basalMetabolicRate(bc.leanMass);
+        adaptiveThermogenesis = adaptiveThermogenesis || 0.14 * baseBMR;
+        this.bmr = estimators.lowBodyFatCalorieExpenditureCorrection(bc.fatPercent, estimators.adaptiveThermogenesisCorrection(baseBMR, adaptiveThermogenesis));
         if (ce.maintenanceCalories) {
-            baseEnergyExpenditure
-            // assuming moderate activity
-            this.bmr = ce.maintenanceCalories / (ce.activityLevel || 1.4) * 0.86 + 0.14 * this.adaptiveThermogenesis;
+            baseEnergyExpenditure = ce.maintenanceCalories + (this.bmr - baseBMR);
         } else {
             let activityLevel = ce.activityLevel || 1.2,
                 activityExpenditure = estimators.activityExpenditure(bc.leanMass, bc.fatMass, activityLevel);
-            this.bmr = estimators.lowBodyFatCalorieExpenditureCorrection(bc.fatPercent, bmr * 0.86 + this.adaptiveThermogenesis * 0.14);
-            baseEnergyExpenditure = this.bmr + estimators.lowBodyFatCalorieExpenditureCorrection(bc.fatPercent, activityExpenditure) + muscleGain;
+            baseEnergyExpenditure = this.bmr + estimators.lowBodyFatCalorieExpenditureCorrection(bc.fatPercent, activityExpenditure) + this.muscleGainCalories;
         }
         this.energyExpenditure = baseEnergyExpenditure + estimators.lowBodyFatCalorieExpenditureCorrection(bc.fatPercent, fastedExerciseCalorieExpenditure);
-        this.calorieIntake = baseEnergyExpenditure - calorieDeficit;
-    }
-
-    model(): BodyComposition {
-        let bc = this.bodyComposition.copy();
-
-        return bc;
+        if (Math.abs(calorieDeficit) < 1) {
+            this.calorieIntake = baseEnergyExpenditure * (1 - calorieDeficit);
+        } else {
+            this.calorieIntake = baseEnergyExpenditure - calorieDeficit;
+        }
+        priorCalorieIntake = priorCalorieIntake || ce.maintenanceCalories || this.calorieIntake;
+        this.adaptiveThermogenesis = estimators.adaptiveThermogenesis(priorCalorieIntake, this.calorieIntake, adaptiveThermogenesis);
+        this.bodyComposition = bc.copy();
+        // factor in loss of lean body mass with overly aggressive calorie restriction
+        this.bodyComposition.fatMass += (this.calorieIntake + Math.min(this.muscleGainCalories, 0) - this.energyExpenditure) / 3500;
+        this.bodyComposition.leanMass += this.muscleGain;
+        this.bodyComposition.weight = bc.fatMass + bc.leanMass;
     }
 }
