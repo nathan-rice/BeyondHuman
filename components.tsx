@@ -79,11 +79,11 @@ export class BodyFatEstimationInput extends React.Component<IBodyFatEstimationPr
 
     handleChange(event) {
         if (event.target.value == "direct") {
-            this.setState({bodyFatMethod: <DirectBodyFatInput />});
+            this.setState({bodyFatEstimator: <DirectBodyFatInput />});
         } else if (event.target.value == "navy") {
-            this.setState({bodyFatMethod: <NavyBodyFatInput />});
+            this.setState({bodyFatEstimator: <NavyBodyFatInput />});
         } else if (event.target.value == "skinfold") {
-            this.setState({bodyFatMethod: <SkinfoldBodyFatInput />});
+            this.setState({bodyFatEstimator: <SkinfoldBodyFatInput />});
         }
     }
 
@@ -209,8 +209,18 @@ interface ICalorieExpenditureProperties {
 }
 
 class CalorieExpenditureInput extends React.Component<ICalorieExpenditureProperties, any> {
-    handleChange() {
+    handleChange(event) {
+        if (event.target.value == 'direct') {
+            this.setState({calorieExpenditureEstimator: <DirectCalorieExpenditureInput/>});
+        } else if (event.target.value == 'weekly-activity') {
+            this.setState({calorieExpenditureEstimator: <WeeklyActivityInput/>});
+        } else if (event.target.value == 'daily-activity') {
+            this.setState({calorieExpenditureEstimator: <DailyActivityInput/>});
+        }
+    }
 
+    getInitialState() {
+        return {}
     }
 
     render() {
@@ -245,28 +255,145 @@ class CalorieExpenditureInput extends React.Component<ICalorieExpenditurePropert
                         </label>
                     </div>
                 </div>
-                <div className="row">
-                    <div className="col-md-6">
-                        <div className="form-group">
-                            <label htmlFor="maintenance-calories">Maintenance calories</label>
-                            <input type="number" className="form-control" id="maintenance-calories"/>
-                        </div>
-                    </div>
-                    <div className="col-md-6">
-                        <div className="form-group">
-                            <label htmlFor="activity-level">Occupational activity level</label>
-                            <select className="form-control" id="activity-level">
-                                <option value="1.2">Primarily seated</option>
-                                <option value="1.375">Moderate standing/light movement</option>
-                                <option value="1.55">Primarily standing/frequent movement</option>
-                                <option value="1.725">Manual labor (light lifting/carrying)</option>
-                                <option value="1.9">Manual labor (heavy lifting/carrying)</option>
-                            </select>
-                        </div>
+                {this.state.calorieExpenditureEstimator}
+            </div>
+        )
+    }
+}
+
+interface IDirectCalorieExpenditureProperties {
+    maintenanceCalories?: number;
+}
+
+class DirectCalorieExpenditureInput extends React.Component<IDirectCalorieExpenditureProperties, any> {
+    getInitialState() {
+        return {}
+    }
+
+    handleChange(event) {
+        this.setState({maintenanceCalories: parseInt(event.target.value)});
+    }
+
+    render() {
+        return (
+            <div className="row">
+                <div className="col-md-6">
+                    <div className="form-group">
+                        <label htmlFor="maintenance-calories">Maintenance calories</label>
+                        <input type="number" className="form-control" id="maintenance-calories" onChange={this.handleChange}/>
                     </div>
                 </div>
             </div>
         )
     }
+}
 
+interface IWeeklyActivityProperties {
+    activityLevel?: number;
+}
+
+function activityLevelSelector(id, onChange, value = "1.2") {
+    return (
+        <select className="form-control" value={value} id={id} onChange={onChange}>
+            <option value="1.2">Primarily seated</option>
+            <option value="1.375">Moderate standing/light movement</option>
+            <option value="1.55">Primarily standing/frequent movement</option>
+            <option value="1.725">Manual labor (light lifting/carrying)</option>
+            <option value="1.9">Manual labor (heavy lifting/carrying)</option>
+        </select>
+    )
+}
+
+class WeeklyActivityInput extends React.Component<IWeeklyActivityProperties, any> {
+    initialState() {
+        return {activityLevel: 1.2}
+    }
+
+    handleChange(event) {
+        this.setState({activityLevel: parseFloat(event.target.value)})
+    }
+
+    render() {
+        return (
+            <div className="row">
+                <div className="col-md-12">
+                    <div className="form-group">
+                        <label htmlFor="activity-level">Occupational activity level</label>
+                        {activityLevelSelector("activity-level", this.handleChange)}
+                    </div>
+                </div>
+            </div>
+        )
+    }
+}
+
+interface IDailyActivityProperties {
+    Monday?: number;
+    Tuesday?: number;
+    Wednesday?: number;
+    Thursday?: number;
+    Friday?: number;
+    Saturday?: number;
+    Sunday?: number;
+}
+
+class DailyActivityInput extends React.Component<IDailyActivityProperties, any> {
+    initialState() {
+        return {}
+    }
+
+    handleChange(event) {
+        let day = event.target.id.split("-"), newState = {};
+        newState[day] = parseFloat(event.target.value);
+        this.setState(newState);
+    }
+
+    render() {
+        return (
+            <div className="row">
+                <div className="col-md-3">
+                    <div className="form-group">
+                        <label htmlFor="Monday-activity-level">Occupational activity level</label>
+                        {activityLevelSelector("Monday-activity-level", this.handleChange)}
+                    </div>
+                </div>
+                <div className="col-md-3">
+                    <div className="form-group">
+                        <label htmlFor="Tuesday-activity-level">Occupational activity level</label>
+                        {activityLevelSelector("Tuesday-activity-level", this.handleChange)}
+                    </div>
+                </div>
+                <div className="col-md-3">
+                    <div className="form-group">
+                        <label htmlFor="Wednesday-activity-level">Occupational activity level</label>
+                        {activityLevelSelector("Wednesday-activity-level", this.handleChange)}
+                    </div>
+                </div>
+                <div className="col-md-3">
+                    <div className="form-group">
+                        <label htmlFor="Thursday-activity-level">Occupational activity level</label>
+                        {activityLevelSelector("Thursday-activity-level", this.handleChange)}
+                    </div>
+                </div>
+                <div className="col-md-3">
+                    <div className="form-group">
+                        <label htmlFor="Friday-activity-level">Occupational activity level</label>
+                        {activityLevelSelector("Friday-activity-level", this.handleChange)}
+                    </div>
+                </div>
+                <div className="col-md-3">
+                    <div className="form-group">
+                        <label htmlFor="Saturday-activity-level">Occupational activity level</label>
+                        {activityLevelSelector("Saturday-activity-level", this.handleChange)}
+                    </div>
+                </div>
+                <div className="col-md-3">
+                    <div className="form-group">
+                        <label htmlFor="Sunday-activity-level">Occupational activity level</label>
+                        {activityLevelSelector("Sunday-activity-level", this.handleChange)}
+                    </div>
+                </div>
+            </div>
+        )
+    }
 }
