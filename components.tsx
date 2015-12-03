@@ -6,7 +6,7 @@ interface IWeightHeightProperties {
     height?: number;
 }
 
-class WeightHeightInput extends React.Component<IWeightHeightProperties, any> {
+export class WeightHeightInput extends React.Component<IWeightHeightProperties, any> {
     render() {
         return (
             <div className="row">
@@ -33,7 +33,7 @@ interface IMuscleGainProperties {
     height?: number;
 }
 
-class MuscleGainInput extends React.Component<IMuscleGainProperties, any> {
+export class MuscleGainInput extends React.Component<IMuscleGainProperties, any> {
     render() {
         return (
             <div>
@@ -41,9 +41,10 @@ class MuscleGainInput extends React.Component<IMuscleGainProperties, any> {
                     <h3>Estimating rate of muscle gain</h3>
 
                     <p>In order to accurately factor in muscle gain when assessing your dietary needs, we need to estimate your
-                rate of muscle gain. To do this, we find an <a href="http://www.weightrainer.net/potential.html">estimate of
+                rate of muscle gain. To do this, we find an<a href="http://www.weightrainer.net/potential.html">estimate of
                     your maximum drug free muscle mass potential</a>, then work backwards from that using our estimate
-                of your current lean body mass to find your<a href="#" data-tooltip="An estimate of the amount of time it would take given consistent diet and training to reach the current level of muscularity">training
+                of your current lean body mass to find your<a href="#"
+                                                              data-tooltip="An estimate of the amount of time it would take given consistent diet and training to reach the current level of muscularity">training
                     age</a>. Given your training age, we can estimate the rate of muscle gain using a formula based on
                 empirical observations of muscle mass accrual in drug free trainees.
                     </p>
@@ -58,7 +59,7 @@ class MuscleGainInput extends React.Component<IMuscleGainProperties, any> {
                     <div className="col-md-6">
                         <div className="form-group">
                             <label htmlFor="ankle">Ankle circumference (inches)</label>
-                            <input type="number" step="0.01" className="form-control" id="ankle" />
+                            <input type="number" step="0.01" className="form-control" id="ankle"/>
                         </div>
                     </div>
                 </div>
@@ -71,10 +72,11 @@ interface IBodyFatEstimationProperties {
     bodyFatMethod?: string;
 }
 
-class BodyFatEstimationInput extends React.Component<IBodyFatEstimationProperties, any> {
+export class BodyFatEstimationInput extends React.Component<IBodyFatEstimationProperties, any> {
     getInitialState() {
         return {};
     }
+
     handleChange(event) {
         if (event.target.value == "direct") {
             this.setState({bodyFatMethod: <DirectBodyFatInput />});
@@ -83,8 +85,8 @@ class BodyFatEstimationInput extends React.Component<IBodyFatEstimationPropertie
         } else if (event.target.value == "skinfold") {
             this.setState({bodyFatMethod: <SkinfoldBodyFatInput />});
         }
-
     }
+
     render() {
         return (
             <div>
@@ -199,4 +201,72 @@ class SkinfoldBodyFatInput extends React.Component<ISkinfoldBodyFatProperties, a
             </div>
         )
     }
+}
+
+interface ICalorieExpenditureProperties {
+    maintenanceCalories?: number;
+    activityLevel?: number;
+}
+
+class CalorieExpenditureInput extends React.Component<ICalorieExpenditureProperties, any> {
+    handleChange() {
+
+    }
+
+    render() {
+        return (
+            <div>
+                <div className="row">
+                    <h3>Calorie expenditure</h3>
+
+                    <p>In order to provide accurate calorie intake targets, we need to know how many calories you expend during
+                a normal day. If you have empirically determined your total daily energy expenditure, you can enter it here.
+                Otherwise, we can try to estimate your basal metabolic rate using your lean body mass, then use that along with
+                your activity level (either daily, or averaged over the week) to determine your total daily energy expenditure.
+                    </p>
+                </div>
+                <div className="row">
+                    <div className="radio">
+                        <label>
+                            <input type="radio" value="direct" onChange={this.handleChange}/>
+                            Use empirically determined total daily energy expenditure
+                        </label>
+                    </div>
+                    <div className="radio">
+                        <label>
+                            <input type="radio" value="weekly-activity" onChange={this.handleChange}/>
+                            Estimate my basal metabolic rate and use a weekly activity level
+                        </label>
+                    </div>
+                    <div className="radio">
+                        <label>
+                            <input type="radio" value="daily-activity" onChange={this.handleChange}/>
+                            Estimate my basal metabolic rate and use daily activity levels
+                        </label>
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col-md-6">
+                        <div className="form-group">
+                            <label htmlFor="maintenance-calories">Maintenance calories</label>
+                            <input type="number" className="form-control" id="maintenance-calories"/>
+                        </div>
+                    </div>
+                    <div className="col-md-6">
+                        <div className="form-group">
+                            <label htmlFor="activity-level">Occupational activity level</label>
+                            <select className="form-control" id="activity-level">
+                                <option value="1.2">Primarily seated</option>
+                                <option value="1.375">Moderate standing/light movement</option>
+                                <option value="1.55">Primarily standing/frequent movement</option>
+                                <option value="1.725">Manual labor (light lifting/carrying)</option>
+                                <option value="1.9">Manual labor (heavy lifting/carrying)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
 }

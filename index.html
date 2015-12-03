@@ -28,7 +28,7 @@
         </div>
 
 
-
+        <MuscleGainInput />
         <BodyFatEstimationInput />
         <hr/>
 
@@ -37,39 +37,6 @@
                                                     class="form-control" id="mass-preservation-coefficient"
                                                     ng-model="config.massPreservationCoefficient"></label>
         <hr/>
-        <div class="row">
-            <h3>Calorie expenditure</h3>
-
-            <p>In order to provide accurate calorie intake targets, we need to know how many calories you expend during
-                a
-                normal day. If you have empirically determined your maintenance calorie intake, you can enter it here.
-                Otherwise, we can try to estimate it using your lean body mass, with a correction for activity performed
-                as
-                part of typical working day.</p>
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label for="maintenance-calories">Maintenance calories</label> <input type="number"
-                                                                                          class="form-control"
-                                                                                          id="maintenance-calories"
-                                                                                          ng-model="config.maintenanceCalories">
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label for="activity-level">Occupational activity level</label> <select class="form-control"
-                                                                                            id="activity-level"
-                                                                                            ng-model="config.activityLevel">
-                    <option value="1.2">Primarily seated</option>
-                    <option value="1.375">Moderate standing/light movement</option>
-                    <option value="1.55">Primarily standing/frequent movement</option>
-                    <option value="1.725">Manual labor (light lifting/carrying)</option>
-                    <option value="1.9">Manual labor (heavy lifting/carrying)</option>
-                </select>
-                </div>
-            </div>
-        </div>
         <div class="row">
             <p>In order to maintain a reasonable rate of fat loss as fat mass decreases, it is necessary to incorporate
                 fasted cardiovascular training. The reason this is necessary is due to the fact that the rate lipolysis
