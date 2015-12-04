@@ -26,17 +26,14 @@
         <div class="row">
             <h3>Tell us a bit about yourself</h3>
         </div>
-
-
-        <MuscleGainInput />
+        <MuscleGainInput/>
         <hr/>
-        <BodyFatEstimationInput />
+        <BodyFatEstimationInput/>
         <hr/>
-        <CalorieExpenditureInput />
+        <CalorieExpenditureInput/>
         <hr/>
         <label>Mass preservation coefficient <input type="range" value="1" step="0.1" min="0.5" max="1.5" step="0.1"
-                                                    class="form-control" id="mass-preservation-coefficient"
-                                                    ng-model="config.massPreservationCoefficient"></label>
+                                                    class="form-control" id="mass-preservation-coefficient"></label>
         <hr/>
         <div class="row">
             <p>In order to maintain a reasonable rate of fat loss as fat mass decreases, it is necessary to incorporate
@@ -57,76 +54,15 @@
                 <div class="form-group">
                     <label for="weekly-exercise-sessions">Weekly fasted exercise sessions</label> <input type="number"
                                                                                                          class="form-control"
-                                                                                                         id="weekly-exercise-sessions"
-                                                                                                         ng-model="config.weeklyExerciseSessions">
+                                                                                                         id="weekly-exercise-sessions">
                 </div>
             </div>
         </div>
         <hr/>
-        <div class="row">
-            <h3>Refeeds</h3>
-
-            <p>It is a good idea to schedule refeeds into any diet plan. Refeeds are beneficial because they break up
-                the monotony of dieting, allow glycogen replenishment, raise your metabolic rate and normalize hormone
-                levels.</p>
-
-            <p>The leaner you are, the more important refeeds become. For people above 12% bodyfat, one refeed per week
-                is sufficient. From 8% to 12%, two refeeds per week is generally advisable. Below 8% bodyfat, three
-                refeeds per week is recommended.</p>
-
-            <p>Generally, it is a good idea to schedule refeeds on workout days. If you work out more than three times
-                per week, you should schedule refeeds to coincide with your highest volume workouts.</p>
-            <label>Refeed days</label>
-        </div>
-        <div class="row">
-            <div class="col-sm-2"><label class="checkbox-inline"><input type="checkbox"
-                                                                        ng-model="config.refeeds.monday">Monday</label>
-            </div>
-            <div class="col-sm-2"><label class="checkbox-inline"><input type="checkbox"
-                                                                        ng-model="config.refeeds.tuesday">Tuesday</label>
-            </div>
-            <div class="col-sm-2"><label class="checkbox-inline"><input type="checkbox"
-                                                                        ng-model="config.refeeds.wednesday">Wednesday</label>
-            </div>
-            <div class="col-sm-2"><label class="checkbox-inline"><input type="checkbox"
-                                                                        ng-model="config.refeeds.thursday">Thursday</label>
-            </div>
-            <div class="col-sm-2"><label class="checkbox-inline"><input type="checkbox"
-                                                                        ng-model="config.refeeds.friday">Friday</label>
-            </div>
-            <div class="col-sm-2"><label class="checkbox-inline"><input type="checkbox"
-                                                                        ng-model="config.refeeds.saturday">Saturday</label>
-            </div>
-            <div class="col-sm-2"><label class="checkbox-inline"><input type="checkbox"
-                                                                        ng-model="config.refeeds.Sunday">Sunday</label>
-            </div>
-        </div>
-        <button ng-click="computeModel()">Compute</button>
+        <RefeedInput/>
+        <button>Compute</button>
     </form>
-    <div class="row" ng-if="dietPlan">
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <td>Daily energy expenditure</td>
-                <td>Daily calorie intake</td>
-                <td>Weight</td>
-                <td>Body fat percent</td>
-                <td>Lean mass</td>
-                <td>Fat mass</td>
-            </tr>
-            </thead>
-            <tbody>
-            <tr ng-repeat="day in dietPlan">
-                <td>{{ day.energyExpenditure | number:2 }}</td>
-                <td>{{ day.calorieIntake | number:2 }}</td>
-                <td>{{ day.leanMass + day.fatMass | number:2 }}</td>
-                <td>{{ day.fatMass / (day.fatMass + day.leanMass) * 100 | number:2 }}</td>
-                <td>{{ day.leanMass | number:2 }}</td>
-                <td>{{ day.fatMass | number:2 }}</td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
+
     <div class="row" ng-if="dietPlan">
         <line-plot plot-data="dietPlan | bodyWeightPlotPreprocessor"></line-plot>
         <uib-tabset justified="true">

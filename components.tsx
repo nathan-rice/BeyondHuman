@@ -1,6 +1,8 @@
 /// <reference path="./react/react.d.ts"/>
 /// <reference path="./react/react-global.d.ts"/>
 
+import models = require("./models");
+
 interface IWeightHeightProperties {
     weight?: number;
     height?: number;
@@ -208,7 +210,7 @@ interface ICalorieExpenditureProperties {
     activityLevel?: number;
 }
 
-class CalorieExpenditureInput extends React.Component<ICalorieExpenditureProperties, any> {
+export class CalorieExpenditureInput extends React.Component<ICalorieExpenditureProperties, any> {
     handleChange(event) {
         if (event.target.value == 'direct') {
             this.setState({calorieExpenditureEstimator: <DirectCalorieExpenditureInput/>});
@@ -280,7 +282,8 @@ class DirectCalorieExpenditureInput extends React.Component<IDirectCalorieExpend
                 <div className="col-md-6">
                     <div className="form-group">
                         <label htmlFor="maintenance-calories">Maintenance calories</label>
-                        <input type="number" className="form-control" id="maintenance-calories" onChange={this.handleChange}/>
+                        <input type="number" className="form-control" id="maintenance-calories"
+                               onChange={this.handleChange}/>
                     </div>
                 </div>
             </div>
@@ -318,7 +321,7 @@ class WeeklyActivityInput extends React.Component<IWeeklyActivityProperties, any
             <div className="row">
                 <div className="col-md-12">
                     <div className="form-group">
-                        <label htmlFor="activity-level">Occupational activity level</label>
+                        <label htmlFor="activity-level">Activity level</label>
                         {activityLevelSelector("activity-level", this.handleChange)}
                     </div>
                 </div>
@@ -353,47 +356,161 @@ class DailyActivityInput extends React.Component<IDailyActivityProperties, any> 
             <div className="row">
                 <div className="col-md-3">
                     <div className="form-group">
-                        <label htmlFor="Monday-activity-level">Occupational activity level</label>
+                        <label htmlFor="Monday-activity-level">Activity level</label>
                         {activityLevelSelector("Monday-activity-level", this.handleChange)}
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="form-group">
-                        <label htmlFor="Tuesday-activity-level">Occupational activity level</label>
+                        <label htmlFor="Tuesday-activity-level">Activity level</label>
                         {activityLevelSelector("Tuesday-activity-level", this.handleChange)}
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="form-group">
-                        <label htmlFor="Wednesday-activity-level">Occupational activity level</label>
+                        <label htmlFor="Wednesday-activity-level">Activity level</label>
                         {activityLevelSelector("Wednesday-activity-level", this.handleChange)}
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="form-group">
-                        <label htmlFor="Thursday-activity-level">Occupational activity level</label>
+                        <label htmlFor="Thursday-activity-level">Activity level</label>
                         {activityLevelSelector("Thursday-activity-level", this.handleChange)}
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="form-group">
-                        <label htmlFor="Friday-activity-level">Occupational activity level</label>
+                        <label htmlFor="Friday-activity-level">Activity level</label>
                         {activityLevelSelector("Friday-activity-level", this.handleChange)}
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="form-group">
-                        <label htmlFor="Saturday-activity-level">Occupational activity level</label>
+                        <label htmlFor="Saturday-activity-level">Activity level</label>
                         {activityLevelSelector("Saturday-activity-level", this.handleChange)}
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="form-group">
-                        <label htmlFor="Sunday-activity-level">Occupational activity level</label>
+                        <label htmlFor="Sunday-activity-level">Activity level</label>
                         {activityLevelSelector("Sunday-activity-level", this.handleChange)}
                     </div>
                 </div>
             </div>
+        )
+    }
+}
+
+class RefeedInput extends React.Component<any, any> {
+    render() {
+        return (
+            <div>
+                <div className="row">
+                    <h3>Refeeds</h3>
+
+                    <p>It is a good idea to schedule refeeds into any diet plan. Refeeds are beneficial because they break up
+                the monotony of dieting, allow glycogen replenishment, raise your metabolic rate and normalize hormone
+                levels.
+                    </p>
+
+                    <p>The leaner you are, the more important refeeds become. For people above 12% bodyfat, one refeed per week
+                is sufficient. From 8% to 12%, two refeeds per week is generally advisable. Below 8% bodyfat, three
+                refeeds per week is recommended.
+                    </p>
+
+                    <p>Generally, it is a good idea to schedule refeeds on workout days. If you work out more than three times
+                per week, you should schedule refeeds to coincide with your highest volume workouts.
+                    </p>
+                    <label>Refeed days</label>
+                </div>
+                <div className="row">
+                    <div className="col-xs-3">
+                        <label className="checkbox-inline"><input type="checkbox"/>Monday
+                        </label>
+                    </div>
+                    <div className="col-xs-3">
+                        <label className="checkbox-inline"><input type="checkbox"/>Tuesday
+                        </label>
+                    </div>
+                    <div className="col-xs-3">
+                        <label className="checkbox-inline"><input type="checkbox"/>Wednesday
+                        </label>
+                    </div>
+                    <div className="col-xs-3">
+                        <label className="checkbox-inline"><input type="checkbox"/>Thursday
+                        </label>
+                    </div>
+                    <div className="col-xs-3">
+                        <label className="checkbox-inline"><input type="checkbox"/>Friday
+                        </label>
+                    </div>
+                    <div className="col-xs-3">
+                        <label className="checkbox-inline"><input type="checkbox"/>Saturday
+                        </label>
+                    </div>
+                    <div className="col-xs-3">
+                        <label className="checkbox-inline"><input type="checkbox"/>Sunday
+                        </label>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+}
+
+interface IDietPlanTableState {
+    rows: models.DietDay[];
+}
+
+class DietPlanTable extends React.Component<any, IDietPlanTableState> {
+    render() {
+        return (
+            <div className="row">
+                <table className="table table-striped">
+                    <thead>
+                        <tr>
+                            <td>Daily energy expenditure</td>
+                            <td>Daily calorie intake</td>
+                            <td>Weight</td>
+                            <td>Body fat percent</td>
+                            <td>Lean mass</td>
+                            <td>Fat mass</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {this.state.rows.map(function (row, i) { return <DietPlanTableEntry/>})}
+                    </tbody>
+                </table>
+            </div>
+        )
+    }
+}
+
+interface IDietPlanTableEntryProperties {
+    energyExpenditure: number;
+    calorieIntake: number;
+    weight: number;
+    leanMass: number;
+    fatMass: number;
+    bodyFatPercent: number;
+}
+
+class DietPlanTableEntry extends React.Component<IDietPlanTableEntryProperties, any> {
+
+    private round(number:number):number {
+        return Math.round(number * 100) / 100;
+    }
+
+    render() {
+        return (
+            <tr>
+                <td>{ this.round(this.props.energyExpenditure) }</td>
+                <td>{ this.round(this.props.calorieIntake) }</td>
+                <td>{ this.round(this.props.weight) }</td>
+                <td>{ this.round(this.props.leanMass) }</td>
+                <td>{ this.round(this.props.fatMass) }</td>
+                <td>{ this.round(this.props.bodyFatPercent) }</td>
+            </tr>
         )
     }
 }
