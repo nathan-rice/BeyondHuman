@@ -3,12 +3,70 @@
 
 import models = require("./models");
 
+export class DietPlannerApp extends React.Component<any, any> {
+    render() {
+        return (
+            <div className="container">
+                <form>
+                    <div className="row">
+                        <div className="form-group">
+                            <label>Diet duration
+                                <input type="number" className="form-control" id="diet-duration"/>
+                            </label>
+                        </div>
+                    </div>
+                    <hr/>
+                    <div className="row">
+                        <h3>Tell us a bit about yourself</h3>
+                    </div>
+                    <MuscleGainInput/>
+                    <hr/>
+                    <BodyFatEstimationInput/>
+                    <hr/>
+                    <CalorieExpenditureInput/>
+                    <hr/>
+                    <label>Mass preservation coefficient
+                        <input type="range" value="1" step="0.1" min="0.5" max="1.5" className="form-control"/>
+                    </label>
+                    <hr/>
+                    <div className="row">
+                        <p>In order to maintain a reasonable rate of fat loss as fat mass decreases, it is necessary to incorporate
+                fasted cardiovascular training. The reason this is necessary is due to the fact that the rate lipolysis
+                in fat cells is the limiting factor in the speed of weight loss at low bodyfat levels, and
+                the lipolytic response to cardiovascular training is significantly blunted in the fed state.
+                        </p>
+                    </div>
+                    <div className="row">
+                        <div className="col-md-6">
+                            <div className="form-group">
+                                <label htmlFor="exercise-calorie-expenditure">Fasted exercise calorie expenditure
+                                </label>
+                                <input type="number" step="0.1" className="form-control"
+                                       id="exercise-calorie-expenditure"/>
+                            </div>
+                        </div>
+                        <div className="col-md-6">
+                            <div className="form-group">
+                                <label htmlFor="weekly-exercise-sessions">Weekly fasted exercise sessions</label>
+                                <input type="number" className="form-control" id="weekly-exercise-sessions"/>
+                            </div>
+                        </div>
+                    </div>
+                    <hr/>
+                    <RefeedInput/>
+                    <button>Compute</button>
+                </form>
+            </div>
+        )
+    }
+}
+
 interface IWeightHeightProperties {
     weight?: number;
     height?: number;
 }
 
-export class WeightHeightInput extends React.Component<IWeightHeightProperties, any> {
+class WeightHeightInput extends React.Component<IWeightHeightProperties, any> {
     render() {
         return (
             <div className="row">
@@ -35,7 +93,7 @@ interface IMuscleGainProperties {
     height?: number;
 }
 
-export class MuscleGainInput extends React.Component<IMuscleGainProperties, any> {
+class MuscleGainInput extends React.Component<IMuscleGainProperties, any> {
     render() {
         return (
             <div>
@@ -74,12 +132,16 @@ interface IBodyFatEstimationProperties {
     bodyFatMethod?: string;
 }
 
-export class BodyFatEstimationInput extends React.Component<IBodyFatEstimationProperties, any> {
-    getInitialState() {
-        return {};
+class BodyFatEstimationInput extends React.Component<IBodyFatEstimationProperties, any> {
+    
+    
+    constructor() {
+        this.onChange = this.onChange.bind(this);
+        this.state = {};
+        super();
     }
 
-    handleChange(event) {
+    onChange(event) {
         if (event.target.value == "direct") {
             this.setState({bodyFatEstimator: <DirectBodyFatInput />});
         } else if (event.target.value == "navy") {
@@ -104,19 +166,19 @@ export class BodyFatEstimationInput extends React.Component<IBodyFatEstimationPr
                 <div className="row">
                     <div className="radio">
                         <label>
-                            <input type="radio" value="direct" onChange={this.handleChange}/>
+                            <input type="radio" value="direct" onChange={this.onChange}/>
                             I will provide my body fat percent
                         </label>
                     </div>
                     <div className="radio">
                         <label>
-                            <input type="radio" value="navy" onChange={this.handleChange}/>
+                            <input type="radio" value="navy" onChange={this.onChange}/>
                             Estimate my body fat percent using my abdomen and neck circumference
                         </label>
                     </div>
                     <div className="radio">
                         <label>
-                            <input type="radio" value="skinfold" onChange={this.handleChange}/>
+                            <input type="radio" value="skinfold" onChange={this.onChange}/>
                             Estimate my body fat percent using caliper skin-fold measurements
                         </label>
                     </div>
@@ -210,8 +272,15 @@ interface ICalorieExpenditureProperties {
     activityLevel?: number;
 }
 
-export class CalorieExpenditureInput extends React.Component<ICalorieExpenditureProperties, any> {
-    handleChange(event) {
+class CalorieExpenditureInput extends React.Component<ICalorieExpenditureProperties, any> {
+    
+    constructor() {
+        this.onChange = this.onChange.bind(this);
+        this.state = {};
+        super();
+    }
+
+    onChange(event) {
         if (event.target.value == 'direct') {
             this.setState({calorieExpenditureEstimator: <DirectCalorieExpenditureInput/>});
         } else if (event.target.value == 'weekly-activity') {
@@ -219,10 +288,6 @@ export class CalorieExpenditureInput extends React.Component<ICalorieExpenditure
         } else if (event.target.value == 'daily-activity') {
             this.setState({calorieExpenditureEstimator: <DailyActivityInput/>});
         }
-    }
-
-    getInitialState() {
-        return {}
     }
 
     render() {
@@ -240,19 +305,19 @@ export class CalorieExpenditureInput extends React.Component<ICalorieExpenditure
                 <div className="row">
                     <div className="radio">
                         <label>
-                            <input type="radio" value="direct" onChange={this.handleChange}/>
+                            <input type="radio" value="direct" onChange={this.onChange}/>
                             Use empirically determined total daily energy expenditure
                         </label>
                     </div>
                     <div className="radio">
                         <label>
-                            <input type="radio" value="weekly-activity" onChange={this.handleChange}/>
+                            <input type="radio" value="weekly-activity" onChange={this.onChange}/>
                             Estimate my basal metabolic rate and use a weekly activity level
                         </label>
                     </div>
                     <div className="radio">
                         <label>
-                            <input type="radio" value="daily-activity" onChange={this.handleChange}/>
+                            <input type="radio" value="daily-activity" onChange={this.onChange}/>
                             Estimate my basal metabolic rate and use daily activity levels
                         </label>
                     </div>
@@ -268,11 +333,14 @@ interface IDirectCalorieExpenditureProperties {
 }
 
 class DirectCalorieExpenditureInput extends React.Component<IDirectCalorieExpenditureProperties, any> {
-    getInitialState() {
-        return {}
+    
+    constructor() {
+        this.onChange = this.onChange.bind(this);
+        this.state = {};
+        super();
     }
 
-    handleChange(event) {
+    onChange(event) {
         this.setState({maintenanceCalories: parseInt(event.target.value)});
     }
 
@@ -283,7 +351,7 @@ class DirectCalorieExpenditureInput extends React.Component<IDirectCalorieExpend
                     <div className="form-group">
                         <label htmlFor="maintenance-calories">Maintenance calories</label>
                         <input type="number" className="form-control" id="maintenance-calories"
-                               onChange={this.handleChange}/>
+                               onChange={this.onChange}/>
                     </div>
                 </div>
             </div>
@@ -308,11 +376,14 @@ function activityLevelSelector(id, onChange, value = "1.2") {
 }
 
 class WeeklyActivityInput extends React.Component<IWeeklyActivityProperties, any> {
-    initialState() {
-        return {activityLevel: 1.2}
+    
+    constructor() {
+        this.onChange = this.onChange.bind(this);
+        this.state = {activityLevel: 1.2};
+        super();
     }
 
-    handleChange(event) {
+    onChange(event) {
         this.setState({activityLevel: parseFloat(event.target.value)})
     }
 
@@ -322,7 +393,7 @@ class WeeklyActivityInput extends React.Component<IWeeklyActivityProperties, any
                 <div className="col-md-12">
                     <div className="form-group">
                         <label htmlFor="activity-level">Activity level</label>
-                        {activityLevelSelector("activity-level", this.handleChange)}
+                        {activityLevelSelector("activity-level", this.onChange)}
                     </div>
                 </div>
             </div>
@@ -341,11 +412,14 @@ interface IDailyActivityProperties {
 }
 
 class DailyActivityInput extends React.Component<IDailyActivityProperties, any> {
-    initialState() {
-        return {}
+    
+    constructor() {
+        this.onChange = this.onChange.bind(this);
+        this.state = {};
+        super();
     }
 
-    handleChange(event) {
+    onChange(event) {
         let day = event.target.id.split("-"), newState = {};
         newState[day] = parseFloat(event.target.value);
         this.setState(newState);
@@ -357,43 +431,43 @@ class DailyActivityInput extends React.Component<IDailyActivityProperties, any> 
                 <div className="col-md-3">
                     <div className="form-group">
                         <label htmlFor="Monday-activity-level">Activity level</label>
-                        {activityLevelSelector("Monday-activity-level", this.handleChange)}
+                        {activityLevelSelector("Monday-activity-level", this.onChange)}
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="form-group">
                         <label htmlFor="Tuesday-activity-level">Activity level</label>
-                        {activityLevelSelector("Tuesday-activity-level", this.handleChange)}
+                        {activityLevelSelector("Tuesday-activity-level", this.onChange)}
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="form-group">
                         <label htmlFor="Wednesday-activity-level">Activity level</label>
-                        {activityLevelSelector("Wednesday-activity-level", this.handleChange)}
+                        {activityLevelSelector("Wednesday-activity-level", this.onChange)}
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="form-group">
                         <label htmlFor="Thursday-activity-level">Activity level</label>
-                        {activityLevelSelector("Thursday-activity-level", this.handleChange)}
+                        {activityLevelSelector("Thursday-activity-level", this.onChange)}
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="form-group">
                         <label htmlFor="Friday-activity-level">Activity level</label>
-                        {activityLevelSelector("Friday-activity-level", this.handleChange)}
+                        {activityLevelSelector("Friday-activity-level", this.onChange)}
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="form-group">
                         <label htmlFor="Saturday-activity-level">Activity level</label>
-                        {activityLevelSelector("Saturday-activity-level", this.handleChange)}
+                        {activityLevelSelector("Saturday-activity-level", this.onChange)}
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="form-group">
                         <label htmlFor="Sunday-activity-level">Activity level</label>
-                        {activityLevelSelector("Sunday-activity-level", this.handleChange)}
+                        {activityLevelSelector("Sunday-activity-level", this.onChange)}
                     </div>
                 </div>
             </div>
@@ -463,6 +537,15 @@ interface IDietPlanTableState {
 }
 
 class DietPlanTable extends React.Component<any, IDietPlanTableState> {
+    transformDietDay(dietDay:models.DietDay, i:number) {
+        return <DietPlanTableEntry energyExpenditure={dietDay.energyExpenditure}
+                                   calorieIntake={dietDay.calorieIntake}
+                                   weight={dietDay.bodyComposition.weight}
+                                   leanMass={dietDay.bodyComposition.leanMass}
+                                   fatMass={dietDay.bodyComposition.fatMass}
+                                   bodyFatPercent={dietDay.bodyComposition.fatPercent()}/>
+    }
+
     render() {
         return (
             <div className="row">
@@ -472,13 +555,13 @@ class DietPlanTable extends React.Component<any, IDietPlanTableState> {
                             <td>Daily energy expenditure</td>
                             <td>Daily calorie intake</td>
                             <td>Weight</td>
-                            <td>Body fat percent</td>
                             <td>Lean mass</td>
                             <td>Fat mass</td>
+                            <td>Body fat percent</td>
                         </tr>
                     </thead>
                     <tbody>
-                        {this.state.rows.map(function (row, i) { return <DietPlanTableEntry/>})}
+                        {this.state.rows.map(this.transformDietDay)}
                     </tbody>
                 </table>
             </div>
