@@ -4,6 +4,23 @@
 import models = require("./models");
 
 export class DietPlannerApp extends React.Component<any, any> {
+    diet:models.Diet;
+    anthrometrics:models.IAnthrometrics;
+    calorieExpenditure:models.ICalorieExpenditure | models.ICalorieExpenditureSchedule;
+
+    constructor() {
+        this.onClick = this.onClick.bind(this);
+        this.state = {};
+        this.calorieExpenditure = {};
+        this.anthrometrics = {weight: 170, height: 70, wrist: 7, ankle: 10};
+        super();
+    }
+
+    onClick(event) {
+        //this.diet = new models.Diet();
+        event.preventDefault();
+    }
+
     render() {
         return (
             <div className="container">
@@ -17,13 +34,15 @@ export class DietPlannerApp extends React.Component<any, any> {
                     </div>
                     <hr/>
                     <div className="row">
-                        <h3>Tell us a bit about yourself</h3>
+                        <h2>Diet planner</h2>
                     </div>
-                    <MuscleGainInput/>
+                    <WeightHeightInput anthrometrics={this.anthrometrics}/>
                     <hr/>
-                    <BodyFatEstimationInput/>
+                    <MuscleGainInput anthrometrics={this.anthrometrics}/>
                     <hr/>
-                    <CalorieExpenditureInput/>
+                    <BodyFatEstimationInput anthrometrics={this.anthrometrics}/>
+                    <hr/>
+                    <CalorieExpenditureInput calorieExpenditure={this.calorieExpenditure}/>
                     <hr/>
                     <label>Mass preservation coefficient
                         <input type="range" value="1" step="0.1" min="0.5" max="1.5" className="form-control"/>
@@ -54,7 +73,7 @@ export class DietPlannerApp extends React.Component<any, any> {
                     </div>
                     <hr/>
                     <RefeedInput/>
-                    <button>Compute</button>
+                    <button onClick={this.onClick}>Compute</button>
                 </form>
             </div>
         )
@@ -62,24 +81,32 @@ export class DietPlannerApp extends React.Component<any, any> {
 }
 
 interface IWeightHeightProperties {
-    weight?: number;
-    height?: number;
+    anthrometrics: models.IAnthrometrics;
 }
 
 class WeightHeightInput extends React.Component<IWeightHeightProperties, any> {
     render() {
         return (
-            <div className="row">
-                <div className="col-md-6">
-                    <div className="form-group">
-                        <label htmlFor="body-weight">Body weight (lbs)</label>
-                        <input type="number" step="0.01" className="form-control" id="body-weight"/>
-                    </div>
+            <div>
+                <div className="row">
+                    <h3>Height and weight</h3>
+                    <p>This diet planner performs a variety of computations that require height and weight as inputs.
+                    </p>
                 </div>
-                <div className="col-md-6">
-                    <div className="form-group">
-                        <label htmlFor="height">Height (inches)</label>
-                        <input type="number" step="0.01" className="form-control" id="height"/>
+                <div className="row">
+                    <div className="col-md-6">
+                        <div className="form-group">
+                            <label htmlFor="body-weight">Body weight (lbs)</label>
+                            <input type="number" step="0.01" className="form-control" id="body-weight"
+                                   onChange={e => this.props.anthrometrics.weight = (e.target as HTMLInputElement).valueAsNumber}/>
+                        </div>
+                    </div>
+                    <div className="col-md-6">
+                        <div className="form-group">
+                            <label htmlFor="height">Height (inches)</label>
+                            <input type="number" step="0.01" className="form-control" id="height"
+                                   onChange={e => this.props.anthrometrics.height = (e.target as HTMLInputElement).valueAsNumber}/>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -88,9 +115,7 @@ class WeightHeightInput extends React.Component<IWeightHeightProperties, any> {
 }
 
 interface IMuscleGainProperties {
-    ankle?: number;
-    wrist?: number;
-    height?: number;
+    anthrometrics: models.IAnthrometrics;
 }
 
 class MuscleGainInput extends React.Component<IMuscleGainProperties, any> {
@@ -129,12 +154,11 @@ class MuscleGainInput extends React.Component<IMuscleGainProperties, any> {
 }
 
 interface IBodyFatEstimationProperties {
-    bodyFatMethod?: string;
+    anthrometrics: models.IAnthrometrics;
 }
 
 class BodyFatEstimationInput extends React.Component<IBodyFatEstimationProperties, any> {
-    
-    
+
     constructor() {
         this.onChange = this.onChange.bind(this);
         this.state = {};
@@ -142,12 +166,25 @@ class BodyFatEstimationInput extends React.Component<IBodyFatEstimationPropertie
     }
 
     onChange(event) {
-        if (event.target.value == "direct") {
-            this.setState({bodyFatEstimator: <DirectBodyFatInput />});
-        } else if (event.target.value == "navy") {
-            this.setState({bodyFatEstimator: <NavyBodyFatInput />});
-        } else if (event.target.value == "skinfold") {
-            this.setState({bodyFatEstimator: <SkinfoldBodyFatInput />});
+        this.setState({bodyFatEstimator: event.target.value});
+    }
+
+    getBodyFatEstimator() {
+        if (this.state.bodyFatEstimator == "direct") {
+            delete this.props.anthrometrics.abdomen;
+            delete this.props.anthrometrics.neck;
+            delete this.props.anthrometrics.skinfolds;
+            return <DirectBodyFatInput anthrometrics={this.props.anthrometrics}/>;
+        } else if (this.state.bodyFatEstimator == "navy") {
+            delete this.props.anthrometrics.fatPercent;
+            delete this.props.anthrometrics.skinfolds;
+            return <NavyBodyFatInput anthrometrics={this.props.anthrometrics}/>;
+        } else if (this.state.bodyFatEstimator == "skinfold") {
+            delete this.props.anthrometrics.fatPercent;
+            delete this.props.anthrometrics.abdomen;
+            delete this.props.anthrometrics.neck;
+            this.props.anthrometrics.skinfolds = {chest: 0, thigh: 0, abdomen: 0};
+            return <SkinfoldBodyFatInput anthrometrics={this.props.anthrometrics}/>;
         }
     }
 
@@ -166,31 +203,35 @@ class BodyFatEstimationInput extends React.Component<IBodyFatEstimationPropertie
                 <div className="row">
                     <div className="radio">
                         <label>
-                            <input type="radio" value="direct" onChange={this.onChange}/>
+                            <input type="radio" value="direct" checked={this.state.bodyFatEstimator === "direct"}
+                                   onChange={this.onChange}/>
                             I will provide my body fat percent
                         </label>
                     </div>
                     <div className="radio">
                         <label>
-                            <input type="radio" value="navy" onChange={this.onChange}/>
+                            <input type="radio" value="navy" checked={this.state.bodyFatEstimator === "navy"}
+                                   onChange={this.onChange}/>
                             Estimate my body fat percent using my abdomen and neck circumference
                         </label>
                     </div>
                     <div className="radio">
                         <label>
-                            <input type="radio" value="skinfold" onChange={this.onChange}/>
+                            <input type="radio" value="skinfold" checked={this.state.bodyFatEstimator === "skinfold"}
+                                   onChange={this.onChange}/>
                             Estimate my body fat percent using caliper skin-fold measurements
                         </label>
                     </div>
                 </div>
-                {this.state.bodyFatEstimator}
+                {this.getBodyFatEstimator()}
             </div>
         )
     }
 }
 
 interface IDirectBodyFatProperties {
-    bodyFatPercentage?: number;
+    anthrometrics: models.IAnthrometrics;
+    defaultFatPercent?: number;
 }
 
 class DirectBodyFatInput extends React.Component<IDirectBodyFatProperties, any> {
@@ -200,7 +241,9 @@ class DirectBodyFatInput extends React.Component<IDirectBodyFatProperties, any> 
                 <div className="col-md-12">
                     <div className="form-group">
                         <label htmlFor="body-fat-percentage">Body fat (%)</label>
-                        <input type="number" step="0.01" className="form-control" id="body-fat-percentage"/>
+                        <input type="number" step="0.01"
+                               className="form-control" id="body-fat-percentage"
+                               onChange={e => this.props.anthrometrics.fatPercent = (e.target as HTMLInputElement).valueAsNumber}/>
                     </div>
                 </div>
             </div>
@@ -209,8 +252,9 @@ class DirectBodyFatInput extends React.Component<IDirectBodyFatProperties, any> 
 }
 
 interface INavyBodyFatProperties {
-    abdomen?: number;
-    neck?: number;
+    anthrometrics: models.IAnthrometrics;
+    defaultAbdomen?: number;
+    defaultNeck?: number;
 }
 
 class NavyBodyFatInput extends React.Component<INavyBodyFatProperties, any> {
@@ -219,14 +263,18 @@ class NavyBodyFatInput extends React.Component<INavyBodyFatProperties, any> {
             <div className="row">
                 <div className="col-md-6">
                     <div className="form-group">
-                        <label htmlFor="abdomen">Abdomen circumference inches</label>
-                        <input type="number" step="0.01" className="form-control" id="abdomen"/>
+                        <label htmlFor="abdomen">Abdomen circumference (inches)</label>
+                        <input type="number" step="0.01"
+                               className="form-control" id="abdomen"
+                               onChange={e => this.props.anthrometrics.abdomen = (e.target as HTMLInputElement).valueAsNumber}/>
                     </div>
                 </div>
                 <div className="col-md-6">
                     <div className="form-group">
-                        <label htmlFor="neck">Neck circumference inches</label>
-                        <input type="number" step="0.01" className="form-control" id="neck"/>
+                        <label htmlFor="neck">Neck circumference (inches)</label>
+                        <input type="number" step="0.01"
+                               className="form-control" id="neck"
+                               onChange={e => this.props.anthrometrics.neck = (e.target as HTMLInputElement).valueAsNumber}/>
                     </div>
                 </div>
             </div>
@@ -235,9 +283,10 @@ class NavyBodyFatInput extends React.Component<INavyBodyFatProperties, any> {
 }
 
 interface ISkinfoldBodyFatProperties {
-    chest?: number;
-    abdomen?: number;
-    thigh?: number;
+    anthrometrics: models.IAnthrometrics;
+    defaultChest?: number;
+    defaultAbdomen?: number;
+    defaultThigh?: number;
 }
 
 class SkinfoldBodyFatInput extends React.Component<ISkinfoldBodyFatProperties, any> {
@@ -246,20 +295,26 @@ class SkinfoldBodyFatInput extends React.Component<ISkinfoldBodyFatProperties, a
             <div className="row">
                 <div className="col-md-4">
                     <div className="form-group">
-                        <label htmlFor="skinfold-chest">Chest skin-fold measurement (mm)</label>
-                        <input type="number" step="0.01" className="form-control" id="skinfold-chest"/>
+                        <label htmlFor="skinfold-chest">Chest skin-fold (mm)</label>
+                        <input type="number" step="0.01"
+                               className="form-control" id="skinfold-chest"
+                               onChange={e => this.props.anthrometrics.skinfolds.chest = (e.target as HTMLInputElement).valueAsNumber}/>
                     </div>
                 </div>
                 <div className="col-md-4">
                     <div className="form-group">
-                        <label htmlFor="skinfold-abdomen">Abdomen skin-fold measurement (mm)</label>
-                        <input type="number" step="0.01" className="form-control" id="skinfold-abdomen"/>
+                        <label htmlFor="skinfold-abdomen">Abdomen skin-fold (mm)</label>
+                        <input type="number" step="0.01"
+                               className="form-control" id="skinfold-abdomen"
+                               onChange={e => this.props.anthrometrics.skinfolds.abdomen = (e.target as HTMLInputElement).valueAsNumber}/>
                     </div>
                 </div>
                 <div className="col-md-4">
                     <div className="form-group">
-                        <label htmlFor="skinfold-thigh">Thigh skin-fold measurement (mm)</label>
-                        <input type="number" step="0.01" className="form-control" id="skinfold-thigh"/>
+                        <label htmlFor="skinfold-thigh">Thigh skin-fold (mm)</label>
+                        <input type="number" step="0.01"
+                               className="form-control" id="skinfold-thigh"
+                               onChange={e => this.props.anthrometrics.skinfolds.thigh = (e.target as HTMLInputElement).valueAsNumber}/>
                     </div>
                 </div>
             </div>
@@ -268,12 +323,12 @@ class SkinfoldBodyFatInput extends React.Component<ISkinfoldBodyFatProperties, a
 }
 
 interface ICalorieExpenditureProperties {
-    maintenanceCalories?: number;
-    activityLevel?: number;
+    calorieExpenditure: models.ICalorieExpenditure | models.ICalorieExpenditureSchedule;
+    calorieExpenditureEstimator?: string;
 }
 
 class CalorieExpenditureInput extends React.Component<ICalorieExpenditureProperties, any> {
-    
+
     constructor() {
         this.onChange = this.onChange.bind(this);
         this.state = {};
@@ -281,12 +336,45 @@ class CalorieExpenditureInput extends React.Component<ICalorieExpenditurePropert
     }
 
     onChange(event) {
-        if (event.target.value == 'direct') {
-            this.setState({calorieExpenditureEstimator: <DirectCalorieExpenditureInput/>});
-        } else if (event.target.value == 'weekly-activity') {
-            this.setState({calorieExpenditureEstimator: <WeeklyActivityInput/>});
-        } else if (event.target.value == 'daily-activity') {
-            this.setState({calorieExpenditureEstimator: <DailyActivityInput/>});
+        this.setState({calorieExpenditureEstimator: event.target.value});
+    }
+
+    calorieExpenditureToCalorieExpenditureSchedule(ce:models.ICalorieExpenditure):models.ICalorieExpenditureSchedule {
+        delete ce.maintenanceCalories;
+        delete ce.activityLevel;
+        (ce as models.ICalorieExpenditureSchedule).Monday = {};
+        (ce as models.ICalorieExpenditureSchedule).Tuesday = {};
+        (ce as models.ICalorieExpenditureSchedule).Wednesday = {};
+        (ce as models.ICalorieExpenditureSchedule).Thursday = {};
+        (ce as models.ICalorieExpenditureSchedule).Friday = {};
+        (ce as models.ICalorieExpenditureSchedule).Saturday = {};
+        (ce as models.ICalorieExpenditureSchedule).Sunday = {};
+        return ce as models.ICalorieExpenditureSchedule;
+    }
+
+    calorieExpenditureScheduleToCalorieExpenditure(ces:models.ICalorieExpenditureSchedule):models.ICalorieExpenditure {
+        delete (ces as models.ICalorieExpenditureSchedule).Monday;
+        delete (ces as models.ICalorieExpenditureSchedule).Tuesday;
+        delete (ces as models.ICalorieExpenditureSchedule).Wednesday;
+        delete (ces as models.ICalorieExpenditureSchedule).Thursday;
+        delete (ces as models.ICalorieExpenditureSchedule).Friday;
+        delete (ces as models.ICalorieExpenditureSchedule).Saturday;
+        delete (ces as models.ICalorieExpenditureSchedule).Sunday;
+        return ces;
+    }
+
+    getCalorieExpenditureEstimator() {
+        let ce;
+        if (this.state.calorieExpenditureEstimator == 'daily-activity') {
+            ce = this.calorieExpenditureToCalorieExpenditureSchedule(this.props.calorieExpenditure as models.ICalorieExpenditure);
+            return <DailyActivityInput calorieExpenditureSchedule={ce}/>;
+        } else {
+            ce = this.calorieExpenditureScheduleToCalorieExpenditure(this.props.calorieExpenditure as models.ICalorieExpenditureSchedule);
+            if (this.state.calorieExpenditureEstimator == 'direct') {
+                return <DirectCalorieExpenditureInput calorieExpenditure={ce}/>;
+            } else if (this.state.calorieExpenditureEstimator == 'weekly-activity') {
+                return <WeeklyActivityInput calorieExpenditure={ce}/>;
+            }
         }
     }
 
@@ -305,53 +393,48 @@ class CalorieExpenditureInput extends React.Component<ICalorieExpenditurePropert
                 <div className="row">
                     <div className="radio">
                         <label>
-                            <input type="radio" value="direct" onChange={this.onChange}/>
-                            Use empirically determined total daily energy expenditure
+                            <input type="radio" value="direct"
+                                   checked={this.state.calorieExpenditureEstimator === "direct"}
+                                   onChange={this.onChange}/>
+                            I will provide my total daily energy expenditure
                         </label>
                     </div>
                     <div className="radio">
                         <label>
-                            <input type="radio" value="weekly-activity" onChange={this.onChange}/>
+                            <input type="radio" value="weekly-activity"
+                                   checked={this.state.calorieExpenditureEstimator === "weekly-activity"}
+                                   onChange={this.onChange}/>
                             Estimate my basal metabolic rate and use a weekly activity level
                         </label>
                     </div>
                     <div className="radio">
                         <label>
-                            <input type="radio" value="daily-activity" onChange={this.onChange}/>
+                            <input type="radio" value="daily-activity"
+                                   checked={this.state.calorieExpenditureEstimator === "daily-activity"}
+                                   onChange={this.onChange}/>
                             Estimate my basal metabolic rate and use daily activity levels
                         </label>
                     </div>
                 </div>
-                {this.state.calorieExpenditureEstimator}
+                {this.getCalorieExpenditureEstimator()}
             </div>
         )
     }
 }
 
-interface IDirectCalorieExpenditureProperties {
-    maintenanceCalories?: number;
+interface ISingleCalorieExpenditureProperties {
+    calorieExpenditure: models.ICalorieExpenditure;
 }
 
-class DirectCalorieExpenditureInput extends React.Component<IDirectCalorieExpenditureProperties, any> {
-    
-    constructor() {
-        this.onChange = this.onChange.bind(this);
-        this.state = {};
-        super();
-    }
-
-    onChange(event) {
-        this.setState({maintenanceCalories: parseInt(event.target.value)});
-    }
-
+class DirectCalorieExpenditureInput extends React.Component<ISingleCalorieExpenditureProperties, any> {
     render() {
         return (
             <div className="row">
                 <div className="col-md-6">
                     <div className="form-group">
-                        <label htmlFor="maintenance-calories">Maintenance calories</label>
+                        <label htmlFor="maintenance-calories">Total daily energy expenditure</label>
                         <input type="number" className="form-control" id="maintenance-calories"
-                               onChange={this.onChange}/>
+                               onChange={e => this.props.calorieExpenditure.maintenanceCalories = (e.target as HTMLInputElement).valueAsNumber}/>
                     </div>
                 </div>
             </div>
@@ -359,41 +442,29 @@ class DirectCalorieExpenditureInput extends React.Component<IDirectCalorieExpend
     }
 }
 
-interface IWeeklyActivityProperties {
-    activityLevel?: number;
+class ActivityLevelSelector extends React.Component<ISingleCalorieExpenditureProperties, any> {
+    render() {
+        return (
+            <select className="form-control" value={this.props.calorieExpenditure.activityLevel}
+                    onChange={e => this.props.calorieExpenditure.activityLevel = parseFloat((e.target as HTMLSelectElement).value)}>
+                <option value="1.2">Primarily seated</option>
+                <option value="1.375">Moderate standing/light movement</option>
+                <option value="1.55">Primarily standing/frequent movement</option>
+                <option value="1.725">Manual labor (light lifting/carrying)</option>
+                <option value="1.9">Manual labor (heavy lifting/carrying)</option>
+            </select>
+        )
+    }
 }
 
-function activityLevelSelector(id, onChange, value = "1.2") {
-    return (
-        <select className="form-control" value={value} id={id} onChange={onChange}>
-            <option value="1.2">Primarily seated</option>
-            <option value="1.375">Moderate standing/light movement</option>
-            <option value="1.55">Primarily standing/frequent movement</option>
-            <option value="1.725">Manual labor (light lifting/carrying)</option>
-            <option value="1.9">Manual labor (heavy lifting/carrying)</option>
-        </select>
-    )
-}
-
-class WeeklyActivityInput extends React.Component<IWeeklyActivityProperties, any> {
-    
-    constructor() {
-        this.onChange = this.onChange.bind(this);
-        this.state = {activityLevel: 1.2};
-        super();
-    }
-
-    onChange(event) {
-        this.setState({activityLevel: parseFloat(event.target.value)})
-    }
-
+class WeeklyActivityInput extends React.Component<ICalorieExpenditureProperties, any> {
     render() {
         return (
             <div className="row">
                 <div className="col-md-12">
                     <div className="form-group">
-                        <label htmlFor="activity-level">Activity level</label>
-                        {activityLevelSelector("activity-level", this.onChange)}
+                        <label htmlFor="activity-level">Weekly average activity level</label>
+                        <ActivityLevelSelector calorieExpenditure={this.props.calorieExpenditure}/>
                     </div>
                 </div>
             </div>
@@ -402,72 +473,53 @@ class WeeklyActivityInput extends React.Component<IWeeklyActivityProperties, any
 }
 
 interface IDailyActivityProperties {
-    Monday?: number;
-    Tuesday?: number;
-    Wednesday?: number;
-    Thursday?: number;
-    Friday?: number;
-    Saturday?: number;
-    Sunday?: number;
+    calorieExpenditureSchedule: models.ICalorieExpenditureSchedule;
 }
 
 class DailyActivityInput extends React.Component<IDailyActivityProperties, any> {
-    
-    constructor() {
-        this.onChange = this.onChange.bind(this);
-        this.state = {};
-        super();
-    }
-
-    onChange(event) {
-        let day = event.target.id.split("-"), newState = {};
-        newState[day] = parseFloat(event.target.value);
-        this.setState(newState);
-    }
-
     render() {
         return (
             <div className="row">
                 <div className="col-md-3">
                     <div className="form-group">
-                        <label htmlFor="Monday-activity-level">Activity level</label>
-                        {activityLevelSelector("Monday-activity-level", this.onChange)}
+                        <label htmlFor="Monday-activity-level">Monday activity Level</label>
+                        <ActivityLevelSelector calorieExpenditure={this.props.calorieExpenditureSchedule.Monday}/>
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="form-group">
-                        <label htmlFor="Tuesday-activity-level">Activity level</label>
-                        {activityLevelSelector("Tuesday-activity-level", this.onChange)}
+                        <label htmlFor="Tuesday-activity-level">Tuesday activity level</label>
+                        <ActivityLevelSelector calorieExpenditure={this.props.calorieExpenditureSchedule.Tuesday}/>
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="form-group">
-                        <label htmlFor="Wednesday-activity-level">Activity level</label>
-                        {activityLevelSelector("Wednesday-activity-level", this.onChange)}
+                        <label htmlFor="Wednesday-activity-level">Wednesday activity level</label>
+                        <ActivityLevelSelector calorieExpenditure={this.props.calorieExpenditureSchedule.Wednesday}/>
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="form-group">
-                        <label htmlFor="Thursday-activity-level">Activity level</label>
-                        {activityLevelSelector("Thursday-activity-level", this.onChange)}
+                        <label htmlFor="Thursday-activity-level">Thursday activity level</label>
+                        <ActivityLevelSelector calorieExpenditure={this.props.calorieExpenditureSchedule.Thursday}/>
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="form-group">
-                        <label htmlFor="Friday-activity-level">Activity level</label>
-                        {activityLevelSelector("Friday-activity-level", this.onChange)}
+                        <label htmlFor="Friday-activity-level">Friday activity level</label>
+                        <ActivityLevelSelector calorieExpenditure={this.props.calorieExpenditureSchedule.Friday}/>
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="form-group">
-                        <label htmlFor="Saturday-activity-level">Activity level</label>
-                        {activityLevelSelector("Saturday-activity-level", this.onChange)}
+                        <label htmlFor="Saturday-activity-level">Saturday activity level</label>
+                        <ActivityLevelSelector calorieExpenditure={this.props.calorieExpenditureSchedule.Saturday}/>
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="form-group">
-                        <label htmlFor="Sunday-activity-level">Activity level</label>
-                        {activityLevelSelector("Sunday-activity-level", this.onChange)}
+                        <label htmlFor="Sunday-activity-level">Sunday activity level</label>
+                        <ActivityLevelSelector calorieExpenditure={this.props.calorieExpenditureSchedule.Sunday}/>
                     </div>
                 </div>
             </div>

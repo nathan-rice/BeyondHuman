@@ -104,7 +104,7 @@ export class Diet {
 
     model() : DietDay[] {
         function getCalorieExpenditure(day) {
-            if (typeof this.calorieExpenditure === 'ICalorieExpenditureSchedule') {
+            if (this.calorieExpenditure.Monday) {
                 return this.calorieExpenditure[Weekday[day % 7]];
             }
             else {
