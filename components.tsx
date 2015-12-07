@@ -1,18 +1,23 @@
 /// <reference path="./react/react.d.ts"/>
 /// <reference path="./react/react-global.d.ts"/>
+/// <reference path="./chartjs/chart.d.ts"/>
 
 import models = require("./models");
 
 export class DietPlannerApp extends React.Component<any, any> {
-    diet:models.Diet;
-    anthrometrics:models.IAnthrometrics;
-    calorieExpenditure:models.ICalorieExpenditure | models.ICalorieExpenditureSchedule;
+    diet: models.Diet;
+    anthrometrics: models.IAnthrometrics;
+    calorieExpenditure: models.ICalorieExpenditure | models.ICalorieExpenditureSchedule;
+    refeedSchedule: models.IRefeedSchedule;
+    settings: any; // misc container object passed via props as a catch all for diet settings
 
     constructor() {
         this.onClick = this.onClick.bind(this);
         this.state = {};
         this.calorieExpenditure = {};
         this.anthrometrics = {weight: 170, height: 70, wrist: 7, ankle: 10};
+        this.refeedSchedule = {};
+        this.settings = {massPreservationCoefficient: 1, duration: 84};
         super();
     }
 
@@ -28,7 +33,8 @@ export class DietPlannerApp extends React.Component<any, any> {
                     <div className="row">
                         <div className="form-group">
                             <label>Diet duration
-                                <input type="number" className="form-control" id="diet-duration"/>
+                                <input type="number" className="form-control" id="diet-duration" value={this.settings.duration}
+                                 onChange={e => this.settings.duration = (e.target as HTMLInputElement).valueAsNumber}/>
                             </label>
                         </div>
                     </div>
@@ -45,7 +51,8 @@ export class DietPlannerApp extends React.Component<any, any> {
                     <CalorieExpenditureInput calorieExpenditure={this.calorieExpenditure}/>
                     <hr/>
                     <label>Mass preservation coefficient
-                        <input type="range" value="1" step="0.1" min="0.5" max="1.5" className="form-control"/>
+                        <input type="range" step="0.1" min="0.5" max="1.5" className="form-control"
+                        onChange={e => this.settings.massPreservationCoefficient = (e.target as HTMLInputElement).valueAsNumber}/>
                     </label>
                     <hr/>
                     <div className="row">
@@ -61,18 +68,22 @@ export class DietPlannerApp extends React.Component<any, any> {
                                 <label htmlFor="exercise-calorie-expenditure">Fasted exercise calorie expenditure
                                 </label>
                                 <input type="number" step="0.1" className="form-control"
-                                       id="exercise-calorie-expenditure"/>
+                                       id="exercise-calorie-expenditure" value={this.settings.fastedExerciseCalorieExpenditure}
+                                       onChange={e => this.settings.fastedExerciseCalorieExpenditure = (e.target as HTMLInputElement).valueAsNumber}/>
                             </div>
                         </div>
                         <div className="col-md-6">
                             <div className="form-group">
                                 <label htmlFor="weekly-exercise-sessions">Weekly fasted exercise sessions</label>
-                                <input type="number" className="form-control" id="weekly-exercise-sessions"/>
+                                <input type="number" className="form-control" id="weekly-exercise-sessions"
+                                       value={this.settings.weeklyFastedExerciseSessions}
+                                       onChange={e => this.settings.weeklyFastedExerciseSessions = (e.target as HTMLInputElement).valueAsNumber}
+                                />
                             </div>
                         </div>
                     </div>
                     <hr/>
-                    <RefeedInput/>
+                    <RefeedInput refeedSchedule={this.refeedSchedule}/>
                     <button onClick={this.onClick}>Compute</button>
                 </form>
             </div>
@@ -339,7 +350,7 @@ class CalorieExpenditureInput extends React.Component<ICalorieExpenditurePropert
         this.setState({calorieExpenditureEstimator: event.target.value});
     }
 
-    calorieExpenditureToCalorieExpenditureSchedule(ce:models.ICalorieExpenditure):models.ICalorieExpenditureSchedule {
+    calorieExpenditureToCalorieExpenditureSchedule(ce: models.ICalorieExpenditure): models.ICalorieExpenditureSchedule {
         delete ce.maintenanceCalories;
         delete ce.activityLevel;
         (ce as models.ICalorieExpenditureSchedule).Monday = {};
@@ -352,7 +363,7 @@ class CalorieExpenditureInput extends React.Component<ICalorieExpenditurePropert
         return ce as models.ICalorieExpenditureSchedule;
     }
 
-    calorieExpenditureScheduleToCalorieExpenditure(ces:models.ICalorieExpenditureSchedule):models.ICalorieExpenditure {
+    calorieExpenditureScheduleToCalorieExpenditure(ces: models.ICalorieExpenditureSchedule): models.ICalorieExpenditure {
         delete (ces as models.ICalorieExpenditureSchedule).Monday;
         delete (ces as models.ICalorieExpenditureSchedule).Tuesday;
         delete (ces as models.ICalorieExpenditureSchedule).Wednesday;
@@ -527,7 +538,11 @@ class DailyActivityInput extends React.Component<IDailyActivityProperties, any> 
     }
 }
 
-class RefeedInput extends React.Component<any, any> {
+interface IReefeedProperties {
+    refeedSchedule: models.IRefeedSchedule;
+}
+
+class RefeedInput extends React.Component<IReefeedProperties, any> {
     render() {
         return (
             <div>
@@ -550,46 +565,54 @@ class RefeedInput extends React.Component<any, any> {
                     <label>Refeed days</label>
                 </div>
                 <div className="row">
-                    <div className="col-xs-3">
-                        <label className="checkbox-inline"><input type="checkbox"/>Monday
-                        </label>
-                    </div>
-                    <div className="col-xs-3">
-                        <label className="checkbox-inline"><input type="checkbox"/>Tuesday
-                        </label>
-                    </div>
-                    <div className="col-xs-3">
-                        <label className="checkbox-inline"><input type="checkbox"/>Wednesday
-                        </label>
-                    </div>
-                    <div className="col-xs-3">
-                        <label className="checkbox-inline"><input type="checkbox"/>Thursday
-                        </label>
-                    </div>
-                    <div className="col-xs-3">
-                        <label className="checkbox-inline"><input type="checkbox"/>Friday
-                        </label>
-                    </div>
-                    <div className="col-xs-3">
-                        <label className="checkbox-inline"><input type="checkbox"/>Saturday
-                        </label>
-                    </div>
-                    <div className="col-xs-3">
-                        <label className="checkbox-inline"><input type="checkbox"/>Sunday
-                        </label>
-                    </div>
+                    <RefeedDayInput day={models.Weekday.Monday} refeedSchedule={this.props.refeedSchedule}/>
+                    <RefeedDayInput day={models.Weekday.Tuesday} refeedSchedule={this.props.refeedSchedule}/>
+                    <RefeedDayInput day={models.Weekday.Wednesday} refeedSchedule={this.props.refeedSchedule}/>
+                    <RefeedDayInput day={models.Weekday.Thursday} refeedSchedule={this.props.refeedSchedule}/>
+                    <RefeedDayInput day={models.Weekday.Friday} refeedSchedule={this.props.refeedSchedule}/>
+                    <RefeedDayInput day={models.Weekday.Saturday} refeedSchedule={this.props.refeedSchedule}/>
+                    <RefeedDayInput day={models.Weekday.Sunday} refeedSchedule={this.props.refeedSchedule}/>
                 </div>
             </div>
         )
     }
 }
 
-interface IDietPlanTableState {
-    rows: models.DietDay[];
+interface IRefeedDayProperties {
+    refeedSchedule: models.IRefeedSchedule;
+    day: models.Weekday;
 }
 
-class DietPlanTable extends React.Component<any, IDietPlanTableState> {
-    transformDietDay(dietDay:models.DietDay, i:number) {
+class RefeedDayInput extends React.Component<IRefeedDayProperties, any> {
+    private toggleRefeed(day) {
+        if (this.props.refeedSchedule[day]) {
+            delete this.props.refeedSchedule[day];
+        } else {
+            this.props.refeedSchedule[day] = 1.05;
+        }
+    }
+
+    render() {
+        let day = models.Weekday[this.props.day];
+        return (
+            <div className="col-xs-3">
+                <label className="checkbox-inline">
+                    <input checked={this.props.refeedSchedule[day]}
+                           onChange={() => this.toggleRefeed(day)}
+                           type="checkbox"/>{day}
+                </label>
+            </div>
+        )
+    }
+}
+
+
+interface IDietPlanTableProperties {
+    days: models.DietDay[];
+}
+
+class DietPlanTable extends React.Component<IDietPlanTableProperties, any> {
+    private transformDietDay(dietDay: models.DietDay, i: number) {
         return <DietPlanTableEntry energyExpenditure={dietDay.energyExpenditure}
                                    calorieIntake={dietDay.calorieIntake}
                                    weight={dietDay.bodyComposition.weight}
@@ -613,7 +636,7 @@ class DietPlanTable extends React.Component<any, IDietPlanTableState> {
                         </tr>
                     </thead>
                     <tbody>
-                        {this.state.rows.map(this.transformDietDay)}
+                        {this.props.days.map(this.transformDietDay)}
                     </tbody>
                 </table>
             </div>
@@ -632,7 +655,7 @@ interface IDietPlanTableEntryProperties {
 
 class DietPlanTableEntry extends React.Component<IDietPlanTableEntryProperties, any> {
 
-    private round(number:number):number {
+    private round(number: number): number {
         return Math.round(number * 100) / 100;
     }
 
