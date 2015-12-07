@@ -17,13 +17,18 @@ export class DietPlannerApp extends React.Component<any, any> {
         this.calorieExpenditure = {};
         this.anthrometrics = {weight: 170, height: 70, wrist: 7, ankle: 10};
         this.refeedSchedule = {};
-        this.settings = {massPreservationCoefficient: 1, duration: 84};
+        this.settings = {massPreservationCoefficient: 1, duration: 84, fastedExerciseCalorieExpenditure: 500,
+        weeklyFastedExerciseSessions: 4};
         super();
     }
 
     onClick(event) {
-        //this.diet = new models.Diet();
+        let dietPlan, bodyComposition = new models.BodyComposition(this.anthrometrics);
         event.preventDefault();
+        this.diet = new models.Diet(bodyComposition, this.settings.duration, this.calorieExpenditure,
+            this.settings.massPreservationCoefficient, this.refeedSchedule);
+        dietPlan = this.diet.model();
+        this.setState({dietResults: dietPlan});
     }
 
     render() {
@@ -32,10 +37,10 @@ export class DietPlannerApp extends React.Component<any, any> {
                 <form>
                     <div className="row">
                         <div className="form-group">
-                            <label>Diet duration
-                                <input type="number" className="form-control" id="diet-duration" value={this.settings.duration}
-                                 onChange={e => this.settings.duration = (e.target as HTMLInputElement).valueAsNumber}/>
-                            </label>
+                            <label htmlFor="diet-duration">Diet duration</label>
+                            <input type="number" className="form-control" id="diet-duration"
+                                   defaultValue={this.settings.duration}
+                                   onChange={e => this.settings.duration = (e.target as HTMLInputElement).valueAsNumber}/>
                         </div>
                     </div>
                     <hr/>
@@ -52,7 +57,8 @@ export class DietPlannerApp extends React.Component<any, any> {
                     <hr/>
                     <label>Mass preservation coefficient
                         <input type="range" step="0.1" min="0.5" max="1.5" className="form-control"
-                        onChange={e => this.settings.massPreservationCoefficient = (e.target as HTMLInputElement).valueAsNumber}/>
+                               defaultValue={this.settings.massPreservationCoefficient}
+                               onChange={e => this.settings.massPreservationCoefficient = (e.target as HTMLInputElement).valueAsNumber}/>
                     </label>
                     <hr/>
                     <div className="row">
@@ -68,7 +74,8 @@ export class DietPlannerApp extends React.Component<any, any> {
                                 <label htmlFor="exercise-calorie-expenditure">Fasted exercise calorie expenditure
                                 </label>
                                 <input type="number" step="0.1" className="form-control"
-                                       id="exercise-calorie-expenditure" value={this.settings.fastedExerciseCalorieExpenditure}
+                                       id="exercise-calorie-expenditure"
+                                       defaultValue={this.settings.fastedExerciseCalorieExpenditure}
                                        onChange={e => this.settings.fastedExerciseCalorieExpenditure = (e.target as HTMLInputElement).valueAsNumber}/>
                             </div>
                         </div>
@@ -76,7 +83,7 @@ export class DietPlannerApp extends React.Component<any, any> {
                             <div className="form-group">
                                 <label htmlFor="weekly-exercise-sessions">Weekly fasted exercise sessions</label>
                                 <input type="number" className="form-control" id="weekly-exercise-sessions"
-                                       value={this.settings.weeklyFastedExerciseSessions}
+                                       defaultValue={this.settings.weeklyFastedExerciseSessions}
                                        onChange={e => this.settings.weeklyFastedExerciseSessions = (e.target as HTMLInputElement).valueAsNumber}
                                 />
                             </div>
@@ -108,14 +115,16 @@ class WeightHeightInput extends React.Component<IWeightHeightProperties, any> {
                     <div className="col-md-6">
                         <div className="form-group">
                             <label htmlFor="body-weight">Body weight (lbs)</label>
-                            <input type="number" step="0.01" className="form-control" id="body-weight"
+                            <input type="number" defaultValue={this.props.anthrometrics.weight} step="0.01"
+                                   className="form-control" id="body-weight"
                                    onChange={e => this.props.anthrometrics.weight = (e.target as HTMLInputElement).valueAsNumber}/>
                         </div>
                     </div>
                     <div className="col-md-6">
                         <div className="form-group">
                             <label htmlFor="height">Height (inches)</label>
-                            <input type="number" step="0.01" className="form-control" id="height"
+                            <input type="number" defaultValue={this.props.anthrometrics.height} step="0.01"
+                                   className="form-control" id="height"
                                    onChange={e => this.props.anthrometrics.height = (e.target as HTMLInputElement).valueAsNumber}/>
                         </div>
                     </div>
@@ -149,13 +158,17 @@ class MuscleGainInput extends React.Component<IMuscleGainProperties, any> {
                     <div className="col-md-6">
                         <div className="form-group">
                             <label htmlFor="wrist">Wrist circumference (inches)</label>
-                            <input type="number" step="0.01" className="form-control" id="wrist"/>
+                            <input type="number" defaultValue={this.props.anthrometrics.wrist} step="0.01"
+                                   className="form-control" id="wrist"
+                                   onChange={e => this.props.anthrometrics.ankle = (e.target as HTMLInputElement).valueAsNumber}/>
                         </div>
                     </div>
                     <div className="col-md-6">
                         <div className="form-group">
                             <label htmlFor="ankle">Ankle circumference (inches)</label>
-                            <input type="number" step="0.01" className="form-control" id="ankle"/>
+                            <input type="number" defaultValue={this.props.anthrometrics.ankle} step="0.01"
+                                   className="form-control" id="ankle"
+                                   onChange={e => this.props.anthrometrics.ankle = (e.target as HTMLInputElement).valueAsNumber}/>
                         </div>
                     </div>
                 </div>
@@ -353,24 +366,25 @@ class CalorieExpenditureInput extends React.Component<ICalorieExpenditurePropert
     calorieExpenditureToCalorieExpenditureSchedule(ce: models.ICalorieExpenditure): models.ICalorieExpenditureSchedule {
         delete ce.maintenanceCalories;
         delete ce.activityLevel;
-        (ce as models.ICalorieExpenditureSchedule).Monday = {};
-        (ce as models.ICalorieExpenditureSchedule).Tuesday = {};
-        (ce as models.ICalorieExpenditureSchedule).Wednesday = {};
-        (ce as models.ICalorieExpenditureSchedule).Thursday = {};
-        (ce as models.ICalorieExpenditureSchedule).Friday = {};
-        (ce as models.ICalorieExpenditureSchedule).Saturday = {};
-        (ce as models.ICalorieExpenditureSchedule).Sunday = {};
+        (ce as models.ICalorieExpenditureSchedule).Monday = {activityLevel: 1.2};
+        (ce as models.ICalorieExpenditureSchedule).Tuesday = {activityLevel: 1.2};
+        (ce as models.ICalorieExpenditureSchedule).Wednesday = {activityLevel: 1.2};
+        (ce as models.ICalorieExpenditureSchedule).Thursday = {activityLevel: 1.2};
+        (ce as models.ICalorieExpenditureSchedule).Friday = {activityLevel: 1.2};
+        (ce as models.ICalorieExpenditureSchedule).Saturday = {activityLevel: 1.2};
+        (ce as models.ICalorieExpenditureSchedule).Sunday = {activityLevel: 1.2};
         return ce as models.ICalorieExpenditureSchedule;
     }
 
     calorieExpenditureScheduleToCalorieExpenditure(ces: models.ICalorieExpenditureSchedule): models.ICalorieExpenditure {
-        delete (ces as models.ICalorieExpenditureSchedule).Monday;
-        delete (ces as models.ICalorieExpenditureSchedule).Tuesday;
-        delete (ces as models.ICalorieExpenditureSchedule).Wednesday;
-        delete (ces as models.ICalorieExpenditureSchedule).Thursday;
-        delete (ces as models.ICalorieExpenditureSchedule).Friday;
-        delete (ces as models.ICalorieExpenditureSchedule).Saturday;
-        delete (ces as models.ICalorieExpenditureSchedule).Sunday;
+        delete ces.Monday;
+        delete ces.Tuesday;
+        delete ces.Wednesday;
+        delete ces.Thursday;
+        delete ces.Friday;
+        delete ces.Saturday;
+        delete ces.Sunday;
+        (ces as models.ICalorieExpenditure).activityLevel = 1.2;
         return ces;
     }
 
@@ -456,7 +470,7 @@ class DirectCalorieExpenditureInput extends React.Component<ISingleCalorieExpend
 class ActivityLevelSelector extends React.Component<ISingleCalorieExpenditureProperties, any> {
     render() {
         return (
-            <select className="form-control" value={this.props.calorieExpenditure.activityLevel}
+            <select className="form-control" defaultValue={this.props.calorieExpenditure.activityLevel}
                     onChange={e => this.props.calorieExpenditure.activityLevel = parseFloat((e.target as HTMLSelectElement).value)}>
                 <option value="1.2">Primarily seated</option>
                 <option value="1.375">Moderate standing/light movement</option>
@@ -599,7 +613,8 @@ class RefeedDayInput extends React.Component<IRefeedDayProperties, any> {
                 <label className="checkbox-inline">
                     <input checked={this.props.refeedSchedule[day]}
                            onChange={() => this.toggleRefeed(day)}
-                           type="checkbox"/>{day}
+                           type="checkbox"/>
+                    {day}
                 </label>
             </div>
         )
