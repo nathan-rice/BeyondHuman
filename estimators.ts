@@ -42,23 +42,21 @@ export function basalMetabolicRate(leanMass: number) {
     return 370 + (21.6 * leanMass / 2.2)
 }
 
-export function adaptiveThermogenesis(oldCalorieIntake: number, newCalorieIntake?: number, adaptiveThermogenesis?: number): number {
+export function adaptiveThermogenesis(metabolicRate: number, calorieDeficit: number, adaptiveThermogenesis?: number): number {
     /* Models the change in metabolic rate over a week period.
      *
-     * This function uses the model for change in adaptive thermogenesis postulated in:
+     * This function was originally based on the model for change in adaptive thermogenesis postulated in:
      *   Quantification of the effect of energy imbalance on bodyweight.
      *   http://www.ncbi.nlm.nih.gov/pubmed/21872751
+     *
+     *   However, it has been modified slightly, as the version specified in the paper is incorrect, and the version
+     *   used in the corresponding web-application only takes into account current calorie intake, not change in intake,
+     *   and not the daily deficit.
      */
-    if (!newCalorieIntake) {
-        newCalorieIntake = oldCalorieIntake;
-    }
     if (!adaptiveThermogenesis) {
-        adaptiveThermogenesis = 0.14 * oldCalorieIntake;
+        adaptiveThermogenesis = metabolicRate * 0.14;
     }
-    var dailyCalorieIntakeChange = oldCalorieIntake - newCalorieIntake;
-    // modifying the formula, because it doesn't make sense that adaptive thermogenesis should decrease if energy intake
-    // stays constant.
-    return adaptiveThermogenesis + (0.14 * newCalorieIntake - adaptiveThermogenesis) / 14;
+    return adaptiveThermogenesis + 0.01 * (metabolicRate - calorieDeficit) - adaptiveThermogenesis / 14;
 }
 
 export function adaptiveThermogenesisCorrection(metabolicRate: number, adaptiveThermogenesis: number): number {

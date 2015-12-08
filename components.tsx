@@ -13,14 +13,16 @@ export class DietPlannerApp extends React.Component<any, any> {
 
     constructor() {
         this.onClick = this.onClick.bind(this);
-        this.state = {};
+        this.state = {diet: []};
         this.calorieExpenditure = {};
-        this.anthrometrics = {weight: 170, height: 70, wrist: 7, ankle: 10};
+        this.anthrometrics = {weight: 210, height: 72, wrist: 7.5, ankle: 11.75};
         this.refeedSchedule = {};
         this.settings = {massPreservationCoefficient: 1, duration: 84, fastedExerciseCalorieExpenditure: 500,
         weeklyFastedExerciseSessions: 4};
         super();
     }
+
+
 
     onClick(event) {
         let dietPlan, bodyComposition = new models.BodyComposition(this.anthrometrics);
@@ -28,10 +30,11 @@ export class DietPlannerApp extends React.Component<any, any> {
         this.diet = new models.Diet(bodyComposition, this.settings.duration, this.calorieExpenditure,
             this.settings.massPreservationCoefficient, this.refeedSchedule);
         dietPlan = this.diet.model();
-        this.setState({dietResults: dietPlan});
+        this.setState({diet: dietPlan});
     }
 
     render() {
+        let diet = this.state.diet.length > 0 ? <DietPlanTable days={this.state.diet}/> : '';
         return (
             <div className="container">
                 <form>
@@ -93,7 +96,9 @@ export class DietPlannerApp extends React.Component<any, any> {
                     <RefeedInput refeedSchedule={this.refeedSchedule}/>
                     <button onClick={this.onClick}>Compute</button>
                 </form>
+                {diet}
             </div>
+
         )
     }
 }
@@ -160,7 +165,7 @@ class MuscleGainInput extends React.Component<IMuscleGainProperties, any> {
                             <label htmlFor="wrist">Wrist circumference (inches)</label>
                             <input type="number" defaultValue={this.props.anthrometrics.wrist} step="0.01"
                                    className="form-control" id="wrist"
-                                   onChange={e => this.props.anthrometrics.ankle = (e.target as HTMLInputElement).valueAsNumber}/>
+                                   onChange={e => this.props.anthrometrics.wrist = (e.target as HTMLInputElement).valueAsNumber}/>
                         </div>
                     </div>
                     <div className="col-md-6">
@@ -638,6 +643,11 @@ class DietPlanTable extends React.Component<IDietPlanTableProperties, any> {
 
     render() {
         return (
+            <div>
+                <hr/>
+                <div className="row">
+                    <h3>Diet plan</h3>
+                </div>
             <div className="row">
                 <table className="table table-striped">
                     <thead>
@@ -655,6 +665,7 @@ class DietPlanTable extends React.Component<IDietPlanTableProperties, any> {
                     </tbody>
                 </table>
             </div>
+                </div>
         )
     }
 }

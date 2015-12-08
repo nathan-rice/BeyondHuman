@@ -89,6 +89,17 @@ export class BodyComposition {
         return potentialMuscleGain - estimators.muscleGainForCalories(deficitAboveMaximum);
     }
 
+    leanMassChange(amount: number) {
+        this.anthrometrics.weight += amount;
+        this.leanMass += amount;
+        this.weight += amount;
+    }
+
+    fatMassChange(amount: number) {
+        this.anthrometrics.weight += amount;
+        this.fatMass += amount;
+        this.weight += amount;
+    }
 }
 
 export interface ICalorieExpenditure {
@@ -151,8 +162,8 @@ export class DietDay {
         this.muscleGainCalories = estimators.muscleGainCalorieRequirement(this.muscleGain);
         let fastedExerciseCalorieExpenditure = ce.fastedExerciseCalorieExpenditure || 0, baseEnergyExpenditure,
             baseBMR = estimators.basalMetabolicRate(bc.leanMass);
-        adaptiveThermogenesis = adaptiveThermogenesis || estimators.adaptiveThermogenesis(baseBMR);
-        this.bmr = estimators.lowBodyFatCalorieExpenditureCorrection(bc.fatPercent(), estimators.adaptiveThermogenesisCorrection(baseBMR, adaptiveThermogenesis));
+        this.adaptiveThermogenesis = estimators.adaptiveThermogenesis(baseBMR, this.calorieDeficit, adaptiveThermogenesis);
+        this.bmr = estimators.lowBodyFatCalorieExpenditureCorrection(bc.fatPercent(), estimators.adaptiveThermogenesisCorrection(baseBMR, this.adaptiveThermogenesis));
         if (ce.maintenanceCalories) {
             baseEnergyExpenditure = ce.maintenanceCalories + this.bmr - baseBMR;
         } else {
@@ -167,11 +178,10 @@ export class DietDay {
             this.calorieIntake = baseEnergyExpenditure - this.calorieDeficit;
         }
         priorCalorieIntake = priorCalorieIntake || ce.maintenanceCalories || baseEnergyExpenditure;
-        this.adaptiveThermogenesis = estimators.adaptiveThermogenesis(priorCalorieIntake, this.calorieIntake, adaptiveThermogenesis);
+
         this.bodyComposition = bc.copy();
         // factor in loss of lean body mass with overly aggressive calorie restriction
-        this.bodyComposition.fatMass += (this.calorieIntake + Math.min(this.muscleGainCalories, 0) - this.energyExpenditure) / 3500;
-        this.bodyComposition.leanMass += this.muscleGain;
-        this.bodyComposition.weight = this.bodyComposition.fatMass + this.bodyComposition.leanMass;
+        this.bodyComposition.fatMassChange((this.calorieIntake + Math.min(this.muscleGainCalories, 0) - this.energyExpenditure) / 3500);
+        this.bodyComposition.leanMassChange(this.muscleGain);
     }
 }
