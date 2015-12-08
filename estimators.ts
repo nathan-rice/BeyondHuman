@@ -56,7 +56,9 @@ export function adaptiveThermogenesis(oldCalorieIntake: number, newCalorieIntake
         adaptiveThermogenesis = 0.14 * oldCalorieIntake;
     }
     var dailyCalorieIntakeChange = oldCalorieIntake - newCalorieIntake;
-    return adaptiveThermogenesis + (0.14 * dailyCalorieIntakeChange - adaptiveThermogenesis) / 14;
+    // modifying the formula, because it doesn't make sense that adaptive thermogenesis should decrease if energy intake
+    // stays constant.
+    return adaptiveThermogenesis + (0.14 * newCalorieIntake - adaptiveThermogenesis) / 14;
 }
 
 export function adaptiveThermogenesisCorrection(metabolicRate: number, adaptiveThermogenesis: number): number {
