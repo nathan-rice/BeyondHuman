@@ -5,8 +5,8 @@
 
 interface ChartDataSet {
     label: string;
-    fillColor: string;
-    strokeColor: string;
+    fillColor?: string;
+    strokeColor?: string;
 
     /* Line, Radar */
     pointColor?: string;
