@@ -1,5 +1,6 @@
 /// <reference path="./react/react.d.ts"/>
 /// <reference path="./react/react-global.d.ts"/>
+/// <reference path="./react-bootstrap/react-bootstrap.d.ts"/>
 /// <reference path="./chartjs/chart.d.ts"/>
 
 import models = require("./models");
@@ -17,12 +18,12 @@ export class DietPlannerApp extends React.Component<any, any> {
         this.calorieExpenditure = {};
         this.anthrometrics = {weight: 210, height: 72, wrist: 7.5, ankle: 11.75};
         this.refeedSchedule = {};
-        this.settings = {massPreservationCoefficient: 1, duration: 84, fastedExerciseCalorieExpenditure: 500,
-        weeklyFastedExerciseSessions: 4};
+        this.settings = {
+            massPreservationCoefficient: 1, duration: 84, fastedExerciseCalorieExpenditure: 500,
+            weeklyFastedExerciseSessions: 4
+        };
         super();
     }
-
-
 
     onClick(event) {
         let dietPlan, bodyComposition = new models.BodyComposition(this.anthrometrics);
@@ -102,6 +103,7 @@ export class DietPlannerApp extends React.Component<any, any> {
         )
     }
 }
+
 
 interface IWeightHeightProperties {
     anthrometrics: models.IAnthrometrics;
@@ -648,24 +650,24 @@ class DietPlanTable extends React.Component<IDietPlanTableProperties, any> {
                 <div className="row">
                     <h3>Diet plan</h3>
                 </div>
-            <div className="row">
-                <table className="table table-striped">
-                    <thead>
-                        <tr>
-                            <td>Daily energy expenditure</td>
-                            <td>Daily calorie intake</td>
-                            <td>Weight</td>
-                            <td>Lean mass</td>
-                            <td>Fat mass</td>
-                            <td>Body fat percent</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {this.props.days.map(this.transformDietDay)}
-                    </tbody>
-                </table>
-            </div>
+                <div className="row">
+                    <table className="table table-striped">
+                        <thead>
+                            <tr>
+                                <td>Daily energy expenditure</td>
+                                <td>Daily calorie intake</td>
+                                <td>Weight</td>
+                                <td>Lean mass</td>
+                                <td>Fat mass</td>
+                                <td>Body fat percent</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {this.props.days.map(this.transformDietDay)}
+                        </tbody>
+                    </table>
                 </div>
+            </div>
         )
     }
 }
@@ -695,6 +697,63 @@ class DietPlanTableEntry extends React.Component<IDietPlanTableEntryProperties, 
                 <td>{ this.round(this.props.fatMass) }</td>
                 <td>{ this.round(this.props.bodyFatPercent) }</td>
             </tr>
+        )
+    }
+}
+
+class DietGraphTabset extends React.Component<any, any> {
+
+    constructor() {
+        this.state = {key: 1};
+        super()
+    }
+
+    private loadDietGraph(tabKey, name): any {
+        if (this.state.key == tabKey) {
+            return <LineChart name={name}/>;
+        } else {
+            return '';
+        }
+    }
+
+    render() {
+        return (
+            <ReactBootstrap.Tabs activeKey={this.state.key} onSelect={key => this.setState({key: key})}>
+                <ReactBootstrap.Tab eventKey={1} title="Tab 1">
+                    {this.loadDietGraph(1, "Weight")}
+                </ReactBootstrap.Tab>
+                <ReactBootstrap.Tab eventKey={2} title="Tab 2">
+                    Tab 2 content
+                </ReactBootstrap.Tab>
+                <ReactBootstrap.Tab eventKey={3} title="Tab 3">
+                    Tab 3 content
+                </ReactBootstrap.Tab>
+            </ReactBootstrap.Tabs>
+        )
+    }
+}
+
+interface LineChartProperties {
+    name: string;
+    width?: number;
+    height?: number;
+    data: LinearChartData;
+    options: LineChartOptions;
+}
+
+class LineChart extends React.Component<LineChartProperties, any> {
+    chart: LinearInstance;
+
+    componentDidMount() {
+        let context = (document.getElementById(this.props.name) as HTMLCanvasElement).getContext("2d");
+        this.chart = new Chart(context).Line(this.props.data, this.props.options);
+    }
+
+    render() {
+        return (
+            <div>
+                <canvas id={this.props.name} width={this.props.width} height={this.props.height}></canvas>
+            </div>
         )
     }
 }
