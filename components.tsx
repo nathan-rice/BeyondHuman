@@ -37,7 +37,7 @@ export class DietPlannerApp extends React.Component<any, any> {
 
     render() {
         let diet = this.state.diet.length > 0 ? <DietPlanTable days={this.state.diet}/> : '',
-            dietTabset = this.state.diet.length > 0 ? <DietGraphTabset days={this.state.diet}/> : '';
+            graphs = this.state.diet.length > 0 ? <GraphDisplay data={this.state.diet}/> : '';
         return (
             <div className="container">
                 <form>
@@ -100,7 +100,7 @@ export class DietPlannerApp extends React.Component<any, any> {
                     <button onClick={this.onClick}>Compute</button>
                 </form>
                 {diet}
-                {dietTabset}
+                {graphs}
             </div>
 
         )
@@ -704,46 +704,39 @@ class DietPlanTableEntry extends React.Component<IDietPlanTableEntryProperties, 
     }
 }
 
-interface DietGraphTabsetProperties {
-    days: models.DietDay[];
-}
 
-class DietGraphTabset extends React.Component<DietGraphTabsetProperties, any> {
-
+class GraphDisplay extends React.Component<any, any> {
+    chart: LinearInstance;
     constructor() {
-        this.state = {key: 1};
-        super()
-    }
-
-    render() {
-        return (
-            <ReactBootstrap.Tabs activeKey={this.state.key} onSelect={key => this.setState({key: key})}>
-                <TestTab2 data={this.props.days} key={1} visible={this.state.key == 1}/>
-                <FatPercentTab data={this.props.days} key={2} visible={this.state.key == 2}/>
-                <CaloriesInOutTab data={this.props.days} key={3} visible={this.state.key == 3}/>
-                <TestTab></TestTab>
-            </ReactBootstrap.Tabs>
-        )
-    }
-}
-
-class TestTab extends React.Component<any, any> {
-    render() {
-        return (
-            <ReactBootstrap.Tab title="test tab" key={5}></ReactBootstrap.Tab>
-        )
-    }
-}
-
-class TestTab2 extends React.Component<any, any> {
-    name: string;
-
-    constructor() {
+        this.state = {activeGraph: "body-weight"};
+        this.onChange = this.onChange.bind(this);
         super();
-        this.name = "Body weight and lean body mass";
     }
 
-    formatData() {
+    componentDidMount() {
+        this.loadGraph(this.state.activeGraph);
+    }
+
+    private loadGraph(graph) {
+        let options = {datasetFill: false}, el = document.getElementById("graph-canvas"),
+            context = (el as HTMLCanvasElement).getContext("2d"), data;
+        if (graph == "body-fat") {
+            data = this.bodyFatData();
+        } else if (graph == "calories") {
+            data = this.caloriesData();
+        } else {
+            data = this.bodyWeightData();
+        }
+        this.chart = new Chart(context).Line(data, options);
+    }
+
+    onChange(event) {
+        this.chart.destroy();
+        this.setState({activeGraph: event.target.value});
+        this.loadGraph(event.target.value);
+    }
+
+    bodyWeightData() {
         let i, chartData = {
             labels: [],
             datasets: [
@@ -759,76 +752,7 @@ class TestTab2 extends React.Component<any, any> {
         return chartData;
     }
 
-    render() {
-        let chartOrEmpty: Element | string = '', data;
-        if (this.props.visible) {
-            data = this.formatData();
-            chartOrEmpty = <LineChart name={this.name} data={data} width={800} height={500}/>
-        }
-        return (
-            <ReactBootstrap.Tab key={this.props.key} eventKey={this.props.key} title="foo">
-                {chartOrEmpty}
-            </ReactBootstrap.Tab>
-        )
-    }
-}
-
-
-interface GraphTabProperties {
-    key: number;
-    data: models.DietDay[];
-    visible: boolean;
-}
-
-abstract class GraphTab extends React.Component<GraphTabProperties, any> {
-    name: string;
-    abstract formatData(): LinearChartData;
-
-    render() {
-        let chartOrEmpty: Element | string = '', data;
-        if (this.props.visible) {
-            data = this.formatData();
-            chartOrEmpty = <LineChart name={this.name} data={data} width={800} height={500}/>
-        }
-        return (
-            <ReactBootstrap.Tab key={this.props.key} eventKey={this.props.key} title="foo">
-                {chartOrEmpty}
-            </ReactBootstrap.Tab>
-        )
-    }
-}
-
-class BodyWeightLeanMassTab extends GraphTab {
-
-    constructor() {
-        super();
-        this.name = "Body weight and lean body mass";
-    }
-
-    formatData() {
-        let i, chartData = {
-            labels: [],
-            datasets: [
-                {data: [], label: "Body weight"},
-                {data: [], label: "Lean body mass"}
-            ]
-        };
-        for (i = 0; i < this.props.data.length; i++) {
-            chartData.labels.push((i + 1).toString());
-            chartData.datasets[0].data.push(this.props.data[i].bodyComposition.weight);
-            chartData.datasets[1].data.push(this.props.data[i].bodyComposition.leanMass);
-        }
-        return chartData;
-    }
-}
-
-class FatPercentTab extends GraphTab {
-    constructor() {
-        super();
-        this.name = "Body fat percent";
-    }
-
-    formatData() {
+    bodyFatData() {
         let i, chartData = {labels: [], datasets: [{data: [], label: "Body fat percent"}]};
         for (i = 0; i < this.props.data.length; i++) {
             chartData.labels.push((i + 1).toString());
@@ -836,15 +760,8 @@ class FatPercentTab extends GraphTab {
         }
         return chartData;
     }
-}
 
-class CaloriesInOutTab extends GraphTab {
-    constructor() {
-        super();
-        this.name = "Calorie intake and expenditure";
-    }
-
-    formatData() {
+    caloriesData() {
         let i, chartData = {
             labels: [],
             datasets: [
@@ -859,27 +776,25 @@ class CaloriesInOutTab extends GraphTab {
         }
         return chartData;
     }
-}
-
-interface LineChartProperties {
-    name: string;
-    width: number;
-    height: number;
-    data: LinearChartData;
-}
-
-class LineChart extends React.Component<LineChartProperties, any> {
-    chart: LinearInstance;
-
-    componentDidMount() {
-        let options = {datasetFill: false}, context = (document.getElementById(this.props.name) as HTMLCanvasElement).getContext("2d");
-        this.chart = new Chart(context).Line(this.props.data, options);
-    }
 
     render() {
         return (
             <div>
-                <canvas id={this.props.name} width={this.props.width} height={this.props.height}></canvas>
+                <div className="row">
+                    <div className="form-group">
+                        <label htmlFor="graph-type">Graph type</label>
+                        <select className="form-control" value={this.state.activeGraph} onChange={this.onChange}>
+                            <option value="body-weight">Body weight and lean body mass</option>
+                            <option value="body-fat">Body fat percentage</option>
+                            <option value="calories">Calorie intake and energy expenditure</option>
+                        </select>
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col-xs-12">
+                        <canvas id="graph-canvas" style={{width: "100%", height: "400px"}}></canvas>
+                    </div>
+                </div>
             </div>
         )
     }
