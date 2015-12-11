@@ -36,8 +36,19 @@ export class DietPlannerApp extends React.Component<any, any> {
     }
 
     render() {
-        let diet = this.state.diet.length > 0 ? <DietPlanTable days={this.state.diet}/> : '',
-            graphs = this.state.diet.length > 0 ? <GraphDisplay data={this.state.diet}/> : '';
+        let diet;
+        if (this.state.diet.length > 0) {
+            diet = (
+                <div>
+                    <hr/>
+                    <DietPlanFixedDataTable days={this.state.diet}/>
+                    <hr/>
+                    <GraphDisplay data={this.state.diet}/>
+                </div>
+            );
+        } else {
+            diet = '';
+        }
         return (
             <div className="container">
                 <form>
@@ -61,11 +72,20 @@ export class DietPlannerApp extends React.Component<any, any> {
                     <hr/>
                     <CalorieExpenditureInput calorieExpenditure={this.calorieExpenditure}/>
                     <hr/>
-                    <label>Mass preservation coefficient
-                        <input type="range" step="0.1" min="0.5" max="1.5" className="form-control"
-                               defaultValue={this.settings.massPreservationCoefficient}
-                               onChange={e => this.settings.massPreservationCoefficient = (e.target as HTMLInputElement).valueAsNumber}/>
-                    </label>
+                    <div className="row">
+
+                    </div>
+                    <div className="row">
+                        <div className="form-group">
+                            <label htmlFor="mass-preservation-coefficient">Mass preservation coefficient</label>
+                            <input id="mass-preservation-coefficient"
+                                   type="range" step="0.1" min="0.5" max="1.5" className="form-control"
+                                   defaultValue={this.settings.massPreservationCoefficient}
+                                   onChange={e => this.settings.massPreservationCoefficient = (e.target as HTMLInputElement).valueAsNumber}/>
+                        </div>
+                    </div>
+
+
                     <hr/>
                     <div className="row">
                         <p>In order to maintain a reasonable rate of fat loss as fat mass decreases, it is necessary to incorporate
@@ -100,7 +120,6 @@ export class DietPlannerApp extends React.Component<any, any> {
                     <button onClick={this.onClick}>Compute</button>
                 </form>
                 {diet}
-                {graphs}
             </div>
 
         )
@@ -632,6 +651,64 @@ class RefeedDayInput extends React.Component<IRefeedDayProperties, any> {
 }
 
 
+class DietPlanFixedDataTable extends React.Component<IDietPlanTableProperties, any> {
+
+    private getValue(obj: models.DietDay, col): number {
+        let number;
+        if (col == "energyExpenditure" || col == "calorieIntake") {
+            number = obj[col];
+        } else if (col == "bodyFatPercent") {
+            number = obj.bodyComposition.fatPercent();
+        } else {
+            number = obj.bodyComposition[col];
+        }
+        return Math.round(number * 100) / 100;
+    }
+
+    private cell(col) {
+        return (props) => {
+            let rowIndex = props.rowIndex;
+            delete props.rowIndex;
+            return (
+                <FixedDataTable.Cell {...props}>{this.getValue(this.props.days[rowIndex], col)}</FixedDataTable.Cell>
+            )
+        }
+    }
+
+    private dayCell(props) {
+        let rowIndex = props.rowIndex;
+        delete props.rowIndex;
+        return (
+            <FixedDataTable.Cell {...props}>{rowIndex + 1}</FixedDataTable.Cell>
+        )
+    }
+
+    render() {
+        return (
+            <div className="row">
+                <FixedDataTable.Table rowHeight={30} headerHeight={30} rowsCount={this.props.days.length} width={1000}
+                                      height={500}>
+                    <FixedDataTable.Column header={<FixedDataTable.Cell>Day</FixedDataTable.Cell>}
+                                           width={100} cell={this.dayCell}></FixedDataTable.Column>
+                    <FixedDataTable.Column header={<FixedDataTable.Cell>Energy expenditure</FixedDataTable.Cell>}
+                                           width={175} cell={this.cell("energyExpenditure")}></FixedDataTable.Column>
+                    <FixedDataTable.Column header={<FixedDataTable.Cell>Calorie intake</FixedDataTable.Cell>}
+                                           width={175} cell={this.cell("calorieIntake")}></FixedDataTable.Column>
+                    <FixedDataTable.Column header={<FixedDataTable.Cell>Weight</FixedDataTable.Cell>} width={125}
+                                           cell={this.cell("weight")}></FixedDataTable.Column>
+                    <FixedDataTable.Column header={<FixedDataTable.Cell>Lean mass</FixedDataTable.Cell>} width={125}
+                                           cell={this.cell("leanMass")}></FixedDataTable.Column>
+                    <FixedDataTable.Column header={<FixedDataTable.Cell>Fat mass</FixedDataTable.Cell>} width={125}
+                                           cell={this.cell("fatMass")}></FixedDataTable.Column>
+                    <FixedDataTable.Column header={<FixedDataTable.Cell>Body fat percent</FixedDataTable.Cell>}
+                                           width={175} cell={this.cell("bodyFatPercent")}></FixedDataTable.Column>
+                </FixedDataTable.Table>
+            </div>
+        )
+    }
+}
+
+
 interface IDietPlanTableProperties {
     days: models.DietDay[];
 }
@@ -707,10 +784,15 @@ class DietPlanTableEntry extends React.Component<IDietPlanTableEntryProperties, 
 
 class GraphDisplay extends React.Component<any, any> {
     chart: LinearInstance;
+
     constructor() {
         this.state = {activeGraph: "body-weight"};
         this.onChange = this.onChange.bind(this);
         super();
+    }
+
+    private round(number: number): number {
+        return Math.round(number * 100) / 100;
     }
 
     componentDidMount() {
@@ -718,7 +800,8 @@ class GraphDisplay extends React.Component<any, any> {
     }
 
     private loadGraph(graph) {
-        let options = {datasetFill: false}, el = document.getElementById("graph-canvas"),
+        let options = {datasetFill: false, pointDotRadius: 2, pointHitDetectionRadius: 4},
+            el = document.getElementById("graph-canvas"),
             context = (el as HTMLCanvasElement).getContext("2d"), data;
         if (graph == "body-fat") {
             data = this.bodyFatData();
@@ -740,23 +823,40 @@ class GraphDisplay extends React.Component<any, any> {
         let i, chartData = {
             labels: [],
             datasets: [
-                {data: [], label: "Body weight"},
-                {data: [], label: "Lean body mass"}
+                {
+                    data: [],
+                    label: "Body weight",
+                    strokeColor: "rgb(192,0,0)",
+                    pointColor: "rgb(255,0,0)",
+                    pointStrokeColor: "rgb(64, 0, 0)"
+                },
+                {
+                    data: [],
+                    label: "Lean body mass",
+                    strokeColor: "rgb(0,0,192)",
+                    pointColor: "rgb(0,0,255)",
+                    pointStrokeColor: "rgb(0, 0, 64)"
+                }
             ]
         };
         for (i = 0; i < this.props.data.length; i++) {
-            chartData.labels.push((i + 1).toString());
-            chartData.datasets[0].data.push(this.props.data[i].bodyComposition.weight);
-            chartData.datasets[1].data.push(this.props.data[i].bodyComposition.leanMass);
+            chartData.labels.push("day " + (i + 1).toString());
+            chartData.datasets[0].data.push(this.round(this.props.data[i].bodyComposition.weight));
+            chartData.datasets[1].data.push(this.round(this.props.data[i].bodyComposition.leanMass));
         }
         return chartData;
     }
 
     bodyFatData() {
-        let i, chartData = {labels: [], datasets: [{data: [], label: "Body fat percent"}]};
+        let i, chartData = {
+            labels: [], datasets: [{
+                data: [], label: "Body fat percent", strokeColor: "rgb(192,0,0)",
+                pointColor: "rgb(255,0,0)", pointStrokeColor: "rgb(64, 0, 0)"
+            }]
+        };
         for (i = 0; i < this.props.data.length; i++) {
-            chartData.labels.push((i + 1).toString());
-            chartData.datasets[0].data.push(this.props.data[i].bodyComposition.fatPercent());
+            chartData.labels.push("day " + (i + 1).toString());
+            chartData.datasets[0].data.push(this.round(this.props.data[i].bodyComposition.fatPercent()));
         }
         return chartData;
     }
@@ -765,14 +865,26 @@ class GraphDisplay extends React.Component<any, any> {
         let i, chartData = {
             labels: [],
             datasets: [
-                {data: [], label: "Calorie intake"},
-                {data: [], label: "Calorie expenditure"}
+                {
+                    data: [],
+                    label: "Calorie intake",
+                    strokeColor: "rgb(192,0,0)",
+                    pointColor: "rgb(255,0,0)",
+                    pointStrokeColor: "rgb(64, 0, 0)"
+                },
+                {
+                    data: [],
+                    label: "Calorie expenditure",
+                    strokeColor: "rgb(0,0,192)",
+                    pointColor: "rgb(0,0,255)",
+                    pointStrokeColor: "rgb(0, 0, 64)"
+                }
             ]
         };
         for (i = 0; i < this.props.data.length; i++) {
-            chartData.labels.push((i + 1).toString());
-            chartData.datasets[0].data.push(this.props.data[i].calorieIntake);
-            chartData.datasets[1].data.push(this.props.data[i].energyExpenditure);
+            chartData.labels.push("day " + (i + 1).toString());
+            chartData.datasets[0].data.push(this.round(this.props.data[i].calorieIntake));
+            chartData.datasets[1].data.push(this.round(this.props.data[i].energyExpenditure));
         }
         return chartData;
     }
@@ -782,7 +894,7 @@ class GraphDisplay extends React.Component<any, any> {
             <div>
                 <div className="row">
                     <div className="form-group">
-                        <label htmlFor="graph-type">Graph type</label>
+                        <label htmlFor="graph-type">Choose a diet plot</label>
                         <select className="form-control" value={this.state.activeGraph} onChange={this.onChange}>
                             <option value="body-weight">Body weight and lean body mass</option>
                             <option value="body-fat">Body fat percentage</option>
