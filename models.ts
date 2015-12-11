@@ -133,7 +133,7 @@ export class Diet {
     }
 
     model(): DietDay[] {
-        let day, dietDays = [], lastDietDay;
+        let day, dietDays = [], lastDietDay, deficit;
         dietDays.push(new DietDay(this.bodyComposition, this.getCalorieExpenditure(0)));
         for (day = 1; day < this.duration; day++) {
             lastDietDay = dietDays[day - 1];
@@ -156,7 +156,7 @@ export class DietDay {
 
     constructor(bc: BodyComposition, private ce: ICalorieExpenditure, adaptiveThermogenesis?: number,
                 private priorCalorieIntake?: number, calorieDeficit?: number) {
-        this.calorieDeficit = this.calorieDeficit || bc.maxDeficit();
+        this.calorieDeficit = calorieDeficit || bc.maxDeficit();
         this.bodyComposition = bc;
         this.muscleGain = bc.dailyMuscleGain(this.calorieDeficit);
         this.muscleGainCalories = estimators.muscleGainCalorieRequirement(this.muscleGain);

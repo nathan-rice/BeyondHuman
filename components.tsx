@@ -27,8 +27,18 @@ export class DietPlannerApp extends React.Component<any, any> {
     }
 
     onClick(event) {
-        let dietPlan, bodyComposition = new models.BodyComposition(this.anthrometrics);
+        let dietPlan, bodyComposition = new models.BodyComposition(this.anthrometrics),
+            dailyFastedExpenditure = this.settings.fastedExerciseCalorieExpenditure * this.settings.weeklyFastedExerciseSessions / 7;
         event.preventDefault();
+        if (this.calorieExpenditure.hasOwnProperty("Monday")) {
+            let day, calorieExpenditure: models.ICalorieExpenditure;
+            for (day in this.calorieExpenditure) {
+                calorieExpenditure = this.calorieExpenditure[day];
+                calorieExpenditure.fastedExerciseCalorieExpenditure = dailyFastedExpenditure;
+            }
+        } else {
+            (this.calorieExpenditure as models.ICalorieExpenditure).fastedExerciseCalorieExpenditure = dailyFastedExpenditure;
+        }
         this.diet = new models.Diet(bodyComposition, this.settings.duration, this.calorieExpenditure,
             this.settings.massPreservationCoefficient, this.refeedSchedule);
         dietPlan = this.diet.model();
@@ -52,6 +62,8 @@ export class DietPlannerApp extends React.Component<any, any> {
         return (
             <div className="container">
                 <form>
+                    <div className="row">
+                        </div>
                     <div className="row">
                         <div className="form-group">
                             <label htmlFor="diet-duration">Diet duration</label>
@@ -631,7 +643,7 @@ class RefeedDayInput extends React.Component<IRefeedDayProperties, any> {
         if (this.props.refeedSchedule[day]) {
             delete this.props.refeedSchedule[day];
         } else {
-            this.props.refeedSchedule[day] = 1.05;
+            this.props.refeedSchedule[day] = -0.05;
         }
     }
 
