@@ -108,6 +108,13 @@ export interface ICalorieExpenditure {
     fastedExerciseCalorieExpenditure?: number;
 }
 
+export interface IDietSettings {
+    duration: number;
+    massPreservationCoefficient?: number;
+    targetBodyFat?: number;
+    targetBodyWeight?: number;
+}
+
 export class Diet {
     constructor(private bodyComposition, public duration: number,
                 public calorieExpenditure: ICalorieExpenditureSchedule | ICalorieExpenditure,
@@ -133,7 +140,7 @@ export class Diet {
     }
 
     model(): DietDay[] {
-        let day, dietDays = [], lastDietDay, deficit;
+        let day, dietDays = [], lastDietDay;
         dietDays.push(new DietDay(this.bodyComposition, this.getCalorieExpenditure(0)));
         for (day = 1; day < this.duration; day++) {
             lastDietDay = dietDays[day - 1];

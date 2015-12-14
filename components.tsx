@@ -1,6 +1,7 @@
 /// <reference path="./react/react.d.ts"/>
 /// <reference path="./react/react-global.d.ts"/>
 /// <reference path="./react-bootstrap/react-bootstrap.d.ts"/>
+/// <reference path="./fixed-data-table/fixed-data-table.d.ts"/>
 /// <reference path="./chartjs/chart.d.ts"/>
 
 import models = require("./models");
@@ -15,7 +16,7 @@ export class DietPlannerApp extends React.Component<any, any> {
 
     constructor() {
         this.onClick = this.onClick.bind(this);
-        this.state = {diet: []};
+        this.state = {diet: [], dietType: "duration"};
         this.calorieExpenditure = {};
         this.anthrometrics = {weight: 210, height: 72, wrist: 7.5, ankle: 11.75};
         this.refeedSchedule = {};
@@ -46,7 +47,7 @@ export class DietPlannerApp extends React.Component<any, any> {
     }
 
     render() {
-        let diet;
+        let diet, dietType;
         if (this.state.diet.length > 0) {
             diet = (
                 <div>
@@ -59,19 +60,51 @@ export class DietPlannerApp extends React.Component<any, any> {
         } else {
             diet = '';
         }
+        switch (this.state.dietType) {
+            case "duration":
+                dietType = <DurationDietInput settings={this.settings}/>;
+                break;
+            case "goal":
+                dietType = <GoalDietInput settings={this.settings}/>;
+                break;
+            case "goal-duration":
+                dietType = <GoalDurationDietInput settings={this.settings}/>
+        }
         return (
             <div className="container">
                 <form>
                     <div className="row">
-                        </div>
+                        <h3>What kind of diet plan are you interested in?</h3>
+                        <p></p>
+                    </div>
                     <div className="row">
-                        <div className="form-group">
-                            <label htmlFor="diet-duration">Diet duration</label>
-                            <input type="number" className="form-control" id="diet-duration"
-                                   defaultValue={this.settings.duration}
-                                   onChange={e => this.settings.duration = (e.target as HTMLInputElement).valueAsNumber}/>
+                        <div className="radio">
+                            <label>
+                                <input type="radio" value="duration"
+                                       checked={this.state.dietType === "duration"}
+                                       onChange={e => this.setState({dietType: (e.target as HTMLInputElement).value})}/>
+                                A diet that lasts for a specific duration
+                            </label>
+                        </div>
+                        <div className="radio">
+                            <label>
+                                <input type="radio" value="goal"
+                                       checked={this.state.dietType === "goal"}
+                                       onChange={e => this.setState({dietType: (e.target as HTMLInputElement).value})}/>
+                                A diet that lasts until a goal is reached
+                            </label>
+                        </div>
+                        <div className="radio">
+                            <label>
+                                <input type="radio" value="goal-duration"
+                                       checked={this.state.dietType === "goal-duration"}
+                                       onChange={e => this.setState({dietType: (e.target as HTMLInputElement).value})}/>
+                                A diet that achieves a goal over a specific duration
+                            </label>
                         </div>
                     </div>
+                    <hr/>
+                    {dietType}
                     <hr/>
                     <div className="row">
                         <h2>Diet planner</h2>
@@ -84,20 +117,6 @@ export class DietPlannerApp extends React.Component<any, any> {
                     <hr/>
                     <CalorieExpenditureInput calorieExpenditure={this.calorieExpenditure}/>
                     <hr/>
-                    <div className="row">
-
-                    </div>
-                    <div className="row">
-                        <div className="form-group">
-                            <label htmlFor="mass-preservation-coefficient">Mass preservation coefficient</label>
-                            <input id="mass-preservation-coefficient"
-                                   type="range" step="0.1" min="0.5" max="1.5" className="form-control"
-                                   defaultValue={this.settings.massPreservationCoefficient}
-                                   onChange={e => this.settings.massPreservationCoefficient = (e.target as HTMLInputElement).valueAsNumber}/>
-                        </div>
-                    </div>
-
-
                     <hr/>
                     <div className="row">
                         <p>In order to maintain a reasonable rate of fat loss as fat mass decreases, it is necessary to incorporate
@@ -138,6 +157,142 @@ export class DietPlannerApp extends React.Component<any, any> {
     }
 }
 
+interface IDietSettingsProperties {
+    settings: any;
+}
+
+class DurationDietInput extends React.Component<IDietSettingsProperties, any> {
+    render() {
+        return (
+            <div>
+                <DietDurationInput settings={this.props.settings}/>
+                <MassPreservationCoefficientInput settings={this.props.settings}/>
+            </div>
+        )
+    }
+}
+
+class GoalDietInput extends React.Component<IDietSettingsProperties, any> {
+    constructor() {
+        this.state = {targetType: "bodyfat"};
+        super()
+    }
+
+    render() {
+        return (
+            <div>
+                <div className="row">
+                    <h4>What kind of target goal do you have?</h4>
+                    <div className="radio">
+                        <label>
+                            <input type="radio" value="bodyfat"
+                                   checked={this.state.targetType === "bodyfat"}
+                                   onChange={e => this.setState({targetType: (e.target as HTMLInputElement).value})}/>
+                            Bodyfat percentage
+                        </label>
+                    </div>
+                    <div className="radio">
+                        <label>
+                            <input type="radio" value="weight"
+                                   checked={this.state.targetType === "weight"}
+                                   onChange={e => this.setState({targetType: (e.target as HTMLInputElement).value})}/>
+                            Weight
+                        </label>
+                    </div>
+                </div>
+                { this.state.targetType == "bodyfat" ?
+                <DietBodyFatGoalInput settings={this.props.settings}/> :
+                <DietBodyWeightGoalInput settings={this.props.settings}/> }
+                <MassPreservationCoefficientInput settings={this.props.settings}/>
+            </div>
+        )
+    }
+}
+
+class GoalDurationDietInput extends React.Component<IDietSettingsProperties, any> {
+    render() {
+        return (
+            <div>
+                <DietDurationInput settings={this.props.settings}/>
+                <GoalDietInput settings={this.props.settings}/>
+            </div>
+        )
+    }
+}
+
+
+class DietDurationInput extends React.Component<IDietSettingsProperties, any> {
+    render() {
+        return (
+            <div className="row">
+                <div className="col-md-12">
+                    <div className="form-group">
+                        <label htmlFor="diet-duration">Diet duration (weeks)</label>
+                        <input type="number" className="form-control" id="diet-duration"
+                               defaultValue={this.props.settings.duration / 7}
+                               onChange={e => this.props.settings.duration = 7 * (e.target as HTMLInputElement).valueAsNumber}/>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+}
+
+class DietBodyFatGoalInput extends React.Component<IDietSettingsProperties, any> {
+    render() {
+        return (
+            <div className="row">
+                <div className="col-md-12">
+                    <div className="form-group">
+                        <label htmlFor="target-body-fat">Target Bodyfat percentage</label>
+                        <input type="number" defaultValue={this.props.settings.targetBodyFat} step="0.01"
+                               className="form-control" id="target-body-fat"
+                               onChange={e => this.props.settings.targetBodyFat = (e.target as HTMLInputElement).valueAsNumber}/>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+}
+
+class DietBodyWeightGoalInput extends React.Component<IDietSettingsProperties, any> {
+    render() {
+        return (
+            <div className="row">
+                <div className="col-md-12">
+                    <div className="form-group">
+                        <label htmlFor="target-body-weight">Target Bodyweight percentage</label>
+                        <input type="number" defaultValue={this.props.settings.targetBodyWeight} step="0.01"
+                               className="form-control" id="target-body-weight"
+                               onChange={e => this.props.settings.targetBodyWeight = (e.target as HTMLInputElement).valueAsNumber}/>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+}
+
+class MassPreservationCoefficientInput extends React.Component<IDietSettingsProperties, any> {
+    render() {
+        return (
+            <div className="row">
+                <h4>Mass preservation coefficient</h4>
+                <p>This setting allows you to scale the aggressiveness of the calorie deficit used by the diet.  Be aware that
+                values above 1 increase the likelihood of muscle loss, and probably only result in marginal additional fat loss.</p>
+                <div className="col-md-10">
+                    <div className="form-group">
+                        <label htmlFor="mass-preservation-coefficient">Mass preservation coefficient</label>
+                        <input id="mass-preservation-coefficient"
+                               type="range" step="0.1" min="0.5" max="1.5" className="form-control"
+                               defaultValue={this.props.settings.massPreservationCoefficient}
+                               onChange={e => this.props.settings.massPreservationCoefficient = (e.target as HTMLInputElement).valueAsNumber}/>
+                    </div>
+                </div>
+                <div className="col-md-2">{this.props.settings.massPreservationCoefficient}</div>
+            </div>
+        )
+    }
+}
 
 interface IWeightHeightProperties {
     anthrometrics: models.IAnthrometrics;
@@ -652,9 +807,7 @@ class RefeedDayInput extends React.Component<IRefeedDayProperties, any> {
         return (
             <div className="col-xs-3">
                 <label className="checkbox-inline">
-                    <input checked={this.props.refeedSchedule[day]}
-                           onChange={() => this.toggleRefeed(day)}
-                           type="checkbox"/>
+                    <input onChange={() => this.toggleRefeed(day)} type="checkbox"/>
                     {day}
                 </label>
             </div>
@@ -719,7 +872,6 @@ class DietPlanFixedDataTable extends React.Component<IDietPlanTableProperties, a
         )
     }
 }
-
 
 interface IDietPlanTableProperties {
     days: models.DietDay[];
@@ -811,7 +963,14 @@ class GraphDisplay extends React.Component<any, any> {
         this.loadGraph(this.state.activeGraph);
     }
 
+    componentDidUpdate() {
+        this.loadGraph(this.state.activeGraph);
+    };
+
     private loadGraph(graph) {
+        if (this.chart) {
+            this.chart.destroy();
+        }
         let options = {datasetFill: false, pointDotRadius: 2, pointHitDetectionRadius: 4},
             el = document.getElementById("graph-canvas"),
             context = (el as HTMLCanvasElement).getContext("2d"), data;
@@ -828,7 +987,6 @@ class GraphDisplay extends React.Component<any, any> {
     onChange(event) {
         this.chart.destroy();
         this.setState({activeGraph: event.target.value});
-        this.loadGraph(event.target.value);
     }
 
     bodyWeightData() {
