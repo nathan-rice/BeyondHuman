@@ -109,16 +109,16 @@ export interface ICalorieExpenditure {
 }
 
 export interface IDietSettings {
-    duration: number;
+    duration?: number;
     massPreservationCoefficient?: number;
     targetBodyFat?: number;
     targetBodyWeight?: number;
 }
 
 export class Diet {
-    constructor(private bodyComposition, public duration: number,
+    constructor(private bodyComposition, public dietSettings: IDietSettings,
                 public calorieExpenditure: ICalorieExpenditureSchedule | ICalorieExpenditure,
-                public massPreservationCoefficient: number = 1, public refeedSchedule?: IRefeedSchedule) {
+                public refeedSchedule?: IRefeedSchedule) {
     }
 
     private getCalorieExpenditure(day: Weekday): ICalorieExpenditure {
@@ -139,14 +139,38 @@ export class Diet {
         return deficit;
     }
 
-    model(): DietDay[] {
-        let day, dietDays = [], lastDietDay;
-        dietDays.push(new DietDay(this.bodyComposition, this.getCalorieExpenditure(0)));
-        for (day = 1; day < this.duration; day++) {
-            lastDietDay = dietDays[day - 1];
-            dietDays.push(new DietDay(lastDietDay.bodyComposition, this.getCalorieExpenditure(day),
-                lastDietDay.adaptiveThermogenesis, lastDietDay.calorieIntake, this.getCalorieDeficit(day)))
+    private dietConditionSatisfied(day, dietDay) {
+        let durationExceeded = day > this.dietSettings.duration,
+            bodyFatTargetReached = dietDay.bodyComposition.fatPercent() < this.dietSettings.targetBodyFat,
+            bodyWeightTargetReached = dietDay.bodyComposition.weight < this.dietSettings.targetBodyWeight;
+        return (
+            (durationExceeded || !this.dietSettings.duration) &&
+            (bodyFatTargetReached || !this.dietSettings.targetBodyFat) &&
+            (bodyWeightTargetReached || !this.dietSettings.targetBodyWeight)
+        );
+    }
+
+    private requiredDailyCalorieDeficit() {
+        let endingLeanMass = estimators.dailyMuscleGain(this.bodyComposition.leanMass, this.bodyComposition.maxLeanMass),
+            endingWeight = this.dietSettings.targetBodyWeight, endingBodyFatPercent = this.dietSettings.targetBodyFat,
+            endingFatMass;
+        if (endingBodyFatPercent) {
+            endingFatMass = endingLeanMass * endingBodyFatPercent / (100 + endingBodyFatPercent);
+        } else if (endingWeight) {
+            endingFatMass = endingWeight - endingLeanMass;
         }
+        return 3500 * (this.bodyComposition.fatMass - endingFatMass) / this.dietSettings.duration;
+    }
+
+    model(): DietDay[] {
+        let day = 1, dietDays = [], dietDay, bodyComposition = this.bodyComposition,
+            adaptiveThermogenesis;
+        do {
+            dietDay = new DietDay(bodyComposition, this.getCalorieExpenditure(day), adaptiveThermogenesis, this.getCalorieDeficit(day));
+            bodyComposition = dietDay.bodyComposition;
+            adaptiveThermogenesis = dietDay.adaptiveThermogenesis;
+            dietDays.push(dietDay)
+        } while (this.dietConditionSatisfied(day++, dietDay));
         return dietDays;
     }
 }
@@ -161,8 +185,7 @@ export class DietDay {
     private muscleGain;
     private muscleGainCalories;
 
-    constructor(bc: BodyComposition, private ce: ICalorieExpenditure, adaptiveThermogenesis?: number,
-                private priorCalorieIntake?: number, calorieDeficit?: number) {
+    constructor(bc: BodyComposition, private ce: ICalorieExpenditure, adaptiveThermogenesis?: number, calorieDeficit?: number) {
         this.calorieDeficit = calorieDeficit || bc.maxDeficit();
         this.bodyComposition = bc;
         this.muscleGain = bc.dailyMuscleGain(this.calorieDeficit);
@@ -184,8 +207,6 @@ export class DietDay {
         } else {
             this.calorieIntake = baseEnergyExpenditure - this.calorieDeficit;
         }
-        priorCalorieIntake = priorCalorieIntake || ce.maintenanceCalories || baseEnergyExpenditure;
-
         this.bodyComposition = bc.copy();
         // factor in loss of lean body mass with overly aggressive calorie restriction
         this.bodyComposition.fatMassChange((this.calorieIntake + Math.min(this.muscleGainCalories, 0) - this.energyExpenditure) / 3500);

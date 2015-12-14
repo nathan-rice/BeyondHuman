@@ -70,7 +70,11 @@ export function lowBodyFatCalorieExpenditureCorrection(bodyFatPercentage: number
      *   signals from fat stores.
      *   http://www.ncbi.nlm.nih.gov/pubmed/9734736
      */
-    return (100 + Math.min(bodyFatPercentage - 20, 0)) / 100 * metabolicRate;
+    return lowBodyFatCalorieExpenditureCoefficient(bodyFatPercentage) * metabolicRate;
+}
+
+export function lowBodyFatCalorieExpenditureCoefficient(bodyFatPercentage: number) {
+    return (100 + Math.min(bodyFatPercentage - 20, 0)) / 100;
 }
 
 export function monthlyMuscleGain(leanMass: number, maxLeanMass: number): number {
