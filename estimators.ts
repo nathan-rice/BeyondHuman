@@ -77,19 +77,19 @@ export function lowBodyFatCalorieExpenditureCoefficient(bodyFatPercentage: numbe
     return (100 + Math.min(bodyFatPercentage - 20, 0)) / 100;
 }
 
-export function monthlyMuscleGain(leanMass: number, maxLeanMass: number): number {
+export function muscleGainForTime(leanMass: number, maxLeanMass: number, duration: number = 1): number {
     var trainingAge, endingLeanMass;
     trainingAge = trainingAgeEstimator(leanMass, maxLeanMass);
-    endingLeanMass = maxLeanMass * (a * Math.log(trainingAge + 1) + b);
+    endingLeanMass = maxLeanMass * (a * Math.log(trainingAge + duration) + b);
     return endingLeanMass - leanMass;
 }
 
 export function weeklyMuscleGain(leanMass: number, maxLeanMass: number): number {
-    return monthlyMuscleGain(leanMass, maxLeanMass) * 0.230769;
+    return muscleGainForTime(leanMass, maxLeanMass, 1 * 0.230769) ;
 }
 
 export function dailyMuscleGain(leanMass: number, maxLeanMass: number): number {
-    return monthlyMuscleGain(leanMass, maxLeanMass) / 30;
+    return muscleGainForTime(leanMass, maxLeanMass, 1 / 30);
 }
 
 function trainingAgeEstimator(leanMass: number, maxLeanMass: number): number {

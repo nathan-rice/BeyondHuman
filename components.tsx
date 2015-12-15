@@ -12,7 +12,7 @@ export class DietPlannerApp extends React.Component<any, any> {
     anthrometrics: models.IAnthrometrics;
     calorieExpenditure: models.ICalorieExpenditure | models.ICalorieExpenditureSchedule;
     refeedSchedule: models.IRefeedSchedule;
-    settings: any; // misc container object passed via props as a catch all for diet settings
+    settings: models.IDietSettings; // misc container object passed via props as a catch all for diet settings
 
     constructor() {
         this.onClick = this.onClick.bind(this);
@@ -20,28 +20,29 @@ export class DietPlannerApp extends React.Component<any, any> {
         this.calorieExpenditure = {};
         this.anthrometrics = {weight: 210, height: 72, wrist: 7.5, ankle: 11.75};
         this.refeedSchedule = {};
-        this.settings = {
-            massPreservationCoefficient: 1, duration: 84, fastedExerciseCalorieExpenditure: 500,
-            weeklyFastedExerciseSessions: 4
-        };
+        this.settings = {massPreservationCoefficient: 1, duration: 84};
         super();
     }
 
     onClick(event) {
-        let dietPlan, bodyComposition = new models.BodyComposition(this.anthrometrics),
-            dailyFastedExpenditure = this.settings.fastedExerciseCalorieExpenditure * this.settings.weeklyFastedExerciseSessions / 7;
+        let dietPlan, bodyComposition = new models.BodyComposition(this.anthrometrics), dailyFastedExerciseExpenditure;
         event.preventDefault();
-        if (this.calorieExpenditure.hasOwnProperty("Monday")) {
-            let day, calorieExpenditure: models.ICalorieExpenditure;
-            for (day in this.calorieExpenditure) {
-                calorieExpenditure = this.calorieExpenditure[day];
-                calorieExpenditure.fastedExerciseCalorieExpenditure = dailyFastedExpenditure;
-            }
-        } else {
-            (this.calorieExpenditure as models.ICalorieExpenditure).fastedExerciseCalorieExpenditure = dailyFastedExpenditure;
+        if (this.state.dietType == "goal") {
+            delete this.settings.duration;
         }
-        this.diet = new models.Diet(bodyComposition, this.settings.duration, this.calorieExpenditure,
-            this.settings.massPreservationCoefficient, this.refeedSchedule);
+        if (this.state.dietType != "goal-duration") {
+            dailyFastedExerciseExpenditure = this.settings.fastedExerciseCalorieExpenditure * this.settings.weeklyFastedExerciseSessions / 7;
+            if (this.calorieExpenditure.hasOwnProperty("Monday")) {
+                let day, calorieExpenditure: models.ICalorieExpenditure;
+                for (day in this.calorieExpenditure) {
+                    calorieExpenditure = this.calorieExpenditure[day];
+                    calorieExpenditure.fastedExerciseCalorieExpenditure = dailyFastedExerciseExpenditure;
+                }
+            } else {
+                (this.calorieExpenditure as models.ICalorieExpenditure).fastedExerciseCalorieExpenditure = dailyFastedExerciseExpenditure;
+            }
+        }
+        this.diet = new models.Diet(bodyComposition, this.settings, this.calorieExpenditure, this.refeedSchedule);
         dietPlan = this.diet.model();
         this.setState({diet: dietPlan});
     }
@@ -278,7 +279,8 @@ class MassPreservationCoefficientInput extends React.Component<IDietSettingsProp
             <div className="row">
                 <h4>Mass preservation coefficient</h4>
                 <p>This setting allows you to scale the aggressiveness of the calorie deficit used by the diet.  Be aware that
-                values above 1 increase the likelihood of muscle loss, and probably only result in marginal additional fat loss.</p>
+                values above 1 increase the likelihood of muscle loss, and probably only result in marginal additional fat loss.
+                </p>
                 <div className="col-md-10">
                     <div className="form-group">
                         <label htmlFor="mass-preservation-coefficient">Mass preservation coefficient</label>
@@ -815,12 +817,16 @@ class RefeedDayInput extends React.Component<IRefeedDayProperties, any> {
     }
 }
 
+interface IDietPlanTableProperties {
+    days: models.DietDay[];
+    displayFastedCardio?: boolean;
+}
 
 class DietPlanFixedDataTable extends React.Component<IDietPlanTableProperties, any> {
 
     private getValue(obj: models.DietDay, col): number {
         let number;
-        if (col == "energyExpenditure" || col == "calorieIntake") {
+        if (col == "energyExpenditure" || col == "calorieIntake" || col == "fastedExerciseEnergyExpenditure") {
             number = obj[col];
         } else if (col == "bodyFatPercent") {
             number = obj.bodyComposition.fatPercent();
@@ -849,32 +855,35 @@ class DietPlanFixedDataTable extends React.Component<IDietPlanTableProperties, a
     }
 
     render() {
+        let width = 1000, cardioColumn: string | Element = '';
+        if (this.props.displayFastedCardio) {
+            cardioColumn = <FixedDataTable.Column header={<FixedDataTable.Cell>Exercise calories</FixedDataTable.Cell>}
+                                                  cell={this.cell("fastedExerciseEnergyExpenditure")} width={150}/>;
+            width = 1150;
+        }
         return (
             <div className="row">
-                <FixedDataTable.Table rowHeight={30} headerHeight={30} rowsCount={this.props.days.length} width={1000}
+                <FixedDataTable.Table rowHeight={30} headerHeight={30} rowsCount={this.props.days.length} width={width}
                                       height={500}>
                     <FixedDataTable.Column header={<FixedDataTable.Cell>Day</FixedDataTable.Cell>}
-                                           width={100} cell={this.dayCell}></FixedDataTable.Column>
+                                           width={100} cell={this.dayCell}/>
                     <FixedDataTable.Column header={<FixedDataTable.Cell>Energy expenditure</FixedDataTable.Cell>}
-                                           width={175} cell={this.cell("energyExpenditure")}></FixedDataTable.Column>
+                                           width={175} cell={this.cell("energyExpenditure")}/>
                     <FixedDataTable.Column header={<FixedDataTable.Cell>Calorie intake</FixedDataTable.Cell>}
-                                           width={175} cell={this.cell("calorieIntake")}></FixedDataTable.Column>
+                                           width={175} cell={this.cell("calorieIntake")}/>
                     <FixedDataTable.Column header={<FixedDataTable.Cell>Weight</FixedDataTable.Cell>} width={125}
-                                           cell={this.cell("weight")}></FixedDataTable.Column>
+                                           cell={this.cell("weight")}/>
                     <FixedDataTable.Column header={<FixedDataTable.Cell>Lean mass</FixedDataTable.Cell>} width={125}
-                                           cell={this.cell("leanMass")}></FixedDataTable.Column>
+                                           cell={this.cell("leanMass")}/>
                     <FixedDataTable.Column header={<FixedDataTable.Cell>Fat mass</FixedDataTable.Cell>} width={125}
-                                           cell={this.cell("fatMass")}></FixedDataTable.Column>
+                                           cell={this.cell("fatMass")}/>
                     <FixedDataTable.Column header={<FixedDataTable.Cell>Body fat percent</FixedDataTable.Cell>}
-                                           width={175} cell={this.cell("bodyFatPercent")}></FixedDataTable.Column>
+                                           width={175} cell={this.cell("bodyFatPercent")}/>
+                    {cardioColumn}
                 </FixedDataTable.Table>
             </div>
         )
     }
-}
-
-interface IDietPlanTableProperties {
-    days: models.DietDay[];
 }
 
 class DietPlanTable extends React.Component<IDietPlanTableProperties, any> {

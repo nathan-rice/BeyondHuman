@@ -113,6 +113,8 @@ export interface IDietSettings {
     massPreservationCoefficient?: number;
     targetBodyFat?: number;
     targetBodyWeight?: number;
+    fastedExerciseCalorieExpenditure?: number;
+    weeklyFastedExerciseSessions?: number;
 }
 
 export class Diet {
@@ -150,16 +152,26 @@ export class Diet {
         );
     }
 
-    private requiredDailyCalorieDeficit() {
-        let endingLeanMass = estimators.dailyMuscleGain(this.bodyComposition.leanMass, this.bodyComposition.maxLeanMass),
+    private requiredDailyCardioCalorieExpenditure() {
+        let endingLeanMass = this.bodyComposition.leanMass + estimators.muscleGainForTime(this.bodyComposition.leanMass, this.bodyComposition.maxLeanMass, this.dietSettings.duration),
             endingWeight = this.dietSettings.targetBodyWeight, endingBodyFatPercent = this.dietSettings.targetBodyFat,
-            endingFatMass;
+            endingFatMass, day, refeedDays, baseDietDeficit = this.bodyComposition.maxDeficit(), endingDietDeficit,
+            averageDietDeficit, requiredTotalCalorieDeficit, requiredCardioCalorieExpenditure;
+        for (day in this.refeedSchedule) {
+            if (this.refeedSchedule[day] == -0.05) {
+                refeedDays++;
+            }
+        }
         if (endingBodyFatPercent) {
             endingFatMass = endingLeanMass * endingBodyFatPercent / (100 + endingBodyFatPercent);
         } else if (endingWeight) {
             endingFatMass = endingWeight - endingLeanMass;
         }
-        return 3500 * (this.bodyComposition.fatMass - endingFatMass) / this.dietSettings.duration;
+        endingDietDeficit = estimators.dailyMaximumDietaryDeficit(endingFatMass);
+        averageDietDeficit = (baseDietDeficit + endingDietDeficit) / 2;
+        requiredTotalCalorieDeficit = 3500 * (this.bodyComposition.fatMass - endingFatMass);
+        requiredCardioCalorieExpenditure = requiredTotalCalorieDeficit - averageDietDeficit * 7 / (7 - refeedDays);
+        return Math.max(requiredCardioCalorieExpenditure / this.dietSettings.duration, 0);
     }
 
     private simpleModel(): DietDay[] {
@@ -170,31 +182,21 @@ export class Diet {
             bodyComposition = dietDay.bodyComposition;
             adaptiveThermogenesis = dietDay.adaptiveThermogenesis;
             dietDays.push(dietDay)
-        } while (this.dietConditionSatisfied(day++, dietDay));
+        } while (!this.dietConditionSatisfied(day++, dietDay));
         return dietDays;
     }
 
     private complexModel(): DietDay[] {
-        let day = 0, dietDays = [], dietDay, bodyComposition = this.bodyComposition, weekday,
-            adaptiveThermogenesis, requiredDeficit = this.requiredDailyCalorieDeficit(), energyExpenditureCoefficient,
-            calorieExpenditure, baseDeficit, refeedDays = 0;
-        dietDay = new DietDay(bodyComposition, this.getCalorieExpenditure(day), adaptiveThermogenesis, this.getCalorieDeficit(day));
-        // the required deficit must be increased based on the number of weekly refeed days specified in the diet
-        for (weekday in this.refeedSchedule) {
-            if (this.refeedSchedule[weekday] == -0.05) {
-                refeedDays++;
-            }
-        }
-        requiredDeficit = (requiredDeficit * 7 + refeedDays * 0.05 * dietDay.bmr) / (7 - refeedDays);
-        // next we have to
+        let day = 0, dietDays = [], dietDay, bodyComposition = this.bodyComposition, adaptiveThermogenesis,
+            calorieExpenditure, requiredExerciseCalorieDeficit = this.requiredDailyCardioCalorieExpenditure();
         do {
             calorieExpenditure = this.getCalorieExpenditure(day);
-            calorieExpenditure.fastedExerciseCalorieExpenditure = Math.max(requiredDeficit - this.bodyComposition.maxDeficit(), 0);
+            calorieExpenditure.fastedExerciseCalorieExpenditure = requiredExerciseCalorieDeficit;
             dietDay = new DietDay(bodyComposition, calorieExpenditure, adaptiveThermogenesis, this.getCalorieDeficit(day));
             bodyComposition = dietDay.bodyComposition;
             adaptiveThermogenesis = dietDay.adaptiveThermogenesis;
             dietDays.push(dietDay)
-        } while (this.dietConditionSatisfied(day++, dietDay));
+        } while (!this.dietConditionSatisfied(day++, dietDay));
         return dietDays;
     }
 
@@ -210,6 +212,7 @@ export class Diet {
 export class DietDay {
     energyExpenditure: number;
     calorieIntake: number;
+    fastedExerciseEnergyExpenditure: number;
     bodyComposition: BodyComposition;
     bmr: number;
     adaptiveThermogenesis: number;
@@ -217,8 +220,9 @@ export class DietDay {
     private muscleGain;
     private muscleGainCalories;
 
-    constructor(bc: BodyComposition, private ce: ICalorieExpenditure, adaptiveThermogenesis?: number, calorieDeficit?: number) {
+    constructor(bc: BodyComposition, ce: ICalorieExpenditure, adaptiveThermogenesis?: number, calorieDeficit?: number) {
         this.calorieDeficit = calorieDeficit || bc.maxDeficit();
+        this.fastedExerciseEnergyExpenditure = ce.fastedExerciseCalorieExpenditure;
         this.muscleGain = bc.dailyMuscleGain(this.calorieDeficit);
         this.muscleGainCalories = estimators.muscleGainCalorieRequirement(this.muscleGain);
         let fastedExerciseCalorieExpenditure = ce.fastedExerciseCalorieExpenditure || 0, baseEnergyExpenditure,
