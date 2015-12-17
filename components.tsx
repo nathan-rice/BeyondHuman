@@ -53,7 +53,8 @@ export class DietPlannerApp extends React.Component<any, any> {
             diet = (
                 <div>
                     <hr/>
-                    <DietPlanFixedDataTable days={this.state.diet}/>
+                    <DietPlanFixedDataTable days={this.state.diet}
+                                            displayFastedCardio={this.state.dietType == "goal-duration"}/>
                     <hr/>
                     <GraphDisplay data={this.state.diet}/>
                 </div>
@@ -66,7 +67,7 @@ export class DietPlannerApp extends React.Component<any, any> {
                 dietType = <DurationDietInput settings={this.settings}/>;
                 break;
             case "goal":
-                dietType = <GoalDietInput settings={this.settings}/>;
+                dietType = <GoalDietInput settings={this.settings} displayMassPreservationInput={true}/>;
                 break;
             case "goal-duration":
                 dietType = <GoalDurationDietInput settings={this.settings}/>
@@ -117,36 +118,8 @@ export class DietPlannerApp extends React.Component<any, any> {
                     <BodyFatEstimationInput anthrometrics={this.anthrometrics}/>
                     <hr/>
                     <CalorieExpenditureInput calorieExpenditure={this.calorieExpenditure}/>
-                    <hr/>
-                    <hr/>
-                    <div className="row">
-                        <p>In order to maintain a reasonable rate of fat loss as fat mass decreases, it is necessary to incorporate
-                fasted cardiovascular training. The reason this is necessary is due to the fact that the rate lipolysis
-                in fat cells is the limiting factor in the speed of weight loss at low bodyfat levels, and
-                the lipolytic response to cardiovascular training is significantly blunted in the fed state.
-                        </p>
-                    </div>
-                    <div className="row">
-                        <div className="col-md-6">
-                            <div className="form-group">
-                                <label htmlFor="exercise-calorie-expenditure">Fasted exercise calorie expenditure
-                                </label>
-                                <input type="number" step="0.1" className="form-control"
-                                       id="exercise-calorie-expenditure"
-                                       defaultValue={this.settings.fastedExerciseCalorieExpenditure}
-                                       onChange={e => this.settings.fastedExerciseCalorieExpenditure = (e.target as HTMLInputElement).valueAsNumber}/>
-                            </div>
-                        </div>
-                        <div className="col-md-6">
-                            <div className="form-group">
-                                <label htmlFor="weekly-exercise-sessions">Weekly fasted exercise sessions</label>
-                                <input type="number" className="form-control" id="weekly-exercise-sessions"
-                                       defaultValue={this.settings.weeklyFastedExerciseSessions}
-                                       onChange={e => this.settings.weeklyFastedExerciseSessions = (e.target as HTMLInputElement).valueAsNumber}
-                                />
-                            </div>
-                        </div>
-                    </div>
+                    {this.state.dietType != "goal-duration" ? <hr/> : ''}
+                    {this.state.dietType != "goal-duration" ? <ExerciseCalorieExpenditureInput settings={this.settings}/> : ''}
                     <hr/>
                     <RefeedInput refeedSchedule={this.refeedSchedule}/>
                     <button onClick={this.onClick}>Compute</button>
@@ -173,7 +146,12 @@ class DurationDietInput extends React.Component<IDietSettingsProperties, any> {
     }
 }
 
-class GoalDietInput extends React.Component<IDietSettingsProperties, any> {
+interface IGoalDietSettingsProperties {
+    settings: any;
+    displayMassPreservationInput?: boolean;
+}
+
+class GoalDietInput extends React.Component<IGoalDietSettingsProperties, any> {
     constructor() {
         this.state = {targetType: "bodyfat"};
         super()
@@ -204,7 +182,8 @@ class GoalDietInput extends React.Component<IDietSettingsProperties, any> {
                 { this.state.targetType == "bodyfat" ?
                 <DietBodyFatGoalInput settings={this.props.settings}/> :
                 <DietBodyWeightGoalInput settings={this.props.settings}/> }
-                <MassPreservationCoefficientInput settings={this.props.settings}/>
+                { this.props.displayMassPreservationInput ? <MassPreservationCoefficientInput
+                    settings={this.props.settings}/> : '' }
             </div>
         )
     }
@@ -215,7 +194,7 @@ class GoalDurationDietInput extends React.Component<IDietSettingsProperties, any
         return (
             <div>
                 <DietDurationInput settings={this.props.settings}/>
-                <GoalDietInput settings={this.props.settings}/>
+                <GoalDietInput settings={this.props.settings} displayMassPreservationInput={false}/>
             </div>
         )
     }
@@ -743,6 +722,44 @@ class DailyActivityInput extends React.Component<IDailyActivityProperties, any> 
                     <div className="form-group">
                         <label htmlFor="Sunday-activity-level">Sunday activity level</label>
                         <ActivityLevelSelector calorieExpenditure={this.props.calorieExpenditureSchedule.Sunday}/>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+}
+
+class ExerciseCalorieExpenditureInput extends React.Component<IDietSettingsProperties, any> {
+    render() {
+        return (
+            <div>
+                <div className="row">
+                    <h3>Exercise calorie expenditure</h3>
+                    <p>In order to maintain a reasonable rate of fat loss as fat mass decreases, it is necessary to incorporate
+                fasted cardiovascular training. The reason this is necessary is due to the fact that the rate lipolysis
+                in fat cells is the limiting factor in the speed of weight loss at low bodyfat levels, and
+                the lipolytic response to cardiovascular training is significantly blunted in the fed state.
+                    </p>
+                </div>
+                <div className="row">
+                    <div className="col-md-6">
+                        <div className="form-group">
+                            <label htmlFor="exercise-calorie-expenditure">Fasted exercise calorie expenditure
+                            </label>
+                            <input type="number" step="0.1" className="form-control"
+                                   id="exercise-calorie-expenditure"
+                                   defaultValue={this.props.settings.fastedExerciseCalorieExpenditure}
+                                   onChange={e => this.props.settings.fastedExerciseCalorieExpenditure = (e.target as HTMLInputElement).valueAsNumber}/>
+                        </div>
+                    </div>
+                    <div className="col-md-6">
+                        <div className="form-group">
+                            <label htmlFor="weekly-exercise-sessions">Weekly fasted exercise sessions</label>
+                            <input type="number" className="form-control" id="weekly-exercise-sessions"
+                                   defaultValue={this.props.settings.weeklyFastedExerciseSessions}
+                                   onChange={e => this.props.settings.weeklyFastedExerciseSessions = (e.target as HTMLInputElement).valueAsNumber}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
