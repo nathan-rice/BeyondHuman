@@ -1,8 +1,8 @@
-/// <reference path="./react/react.d.ts"/>
-/// <reference path="./react/react-global.d.ts"/>
-/// <reference path="./react-bootstrap/react-bootstrap.d.ts"/>
-/// <reference path="./fixed-data-table/fixed-data-table.d.ts"/>
-/// <reference path="./chartjs/chart.d.ts"/>
+/// <reference path="definitions/react/react.d.ts"/>
+/// <reference path="definitions/react/react-global.d.ts"/>
+/// <reference path="./../react-bootstrap/react-bootstrap.d.ts"/>
+/// <reference path="definitions/fixed-data-table/fixed-data-table.d.ts"/>
+/// <reference path="./../chartjs/chart.d.ts"/>
 
 import models = require("./models");
 import Element = JSX.Element;

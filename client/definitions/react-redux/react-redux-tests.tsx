@@ -11,7 +11,7 @@ import * as ReactDOM from 'react-dom';
 import * as Router from 'react-router';
 import { Route, RouterState } from 'react-router';
 import { Store, Dispatch, bindActionCreators } from 'redux';
-import { connect, Provider } from 'react-redux';
+import { connect, Provider } from 'react-redux.d';
 import objectAssign = require('object-assign');
 
 //
